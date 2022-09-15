@@ -1,6 +1,6 @@
 /**
 * Contains a function that will split a string into a list of characters 
-* and a function that forms an alphatic histogram.
+* and a function that prints out an alphatic histogram.
 *
 * @author Max Blennemann
 * @version 9/7/22
