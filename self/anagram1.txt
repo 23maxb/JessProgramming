@@ -1,0 +1,13 @@
+(deftemplate Letter (slot c) (slot p))
+
+(assert (Letter (c D) (p 1)))
+(assert (Letter (c A) (p 2)))
+(assert (Letter (c C) (p 3)))
+(assert (Letter (c A) (p 4)))
+
+
+(defrule rule-2 "Enumerate pairs of unique letters"
+    (Letter (c ?c1)) (Letter (c ?c2 &~?c1))
+=>
+    (printout t ?c1 ?c2 " ")
+)
