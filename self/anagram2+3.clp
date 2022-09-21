@@ -1,7 +1,6 @@
 /**
-* Prints out groups of ten letters without duplicates. 
-* Length of 10 is used, since a length of 11 would generate a stack overflow error.
-* The alphabet is mostly commented out below for the user to readd letters if needed.
+* Prints out groups of 4 letters without duplicates. 
+* Length of 4 is used. 
 *
 * @author Dr. Nelson
 * @author Max Blennemann
