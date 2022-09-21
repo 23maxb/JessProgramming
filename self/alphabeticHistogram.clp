@@ -55,5 +55,3 @@ Happy testing!
       (printline (str-cat (toChar (- (+ ?i (asc "A")) 1)) ": " (nth$ ?i ?charCount)))
    )
 ) ;deffunction histo ()
-
-(histo)

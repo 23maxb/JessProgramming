@@ -1,5 +1,5 @@
 (batch "executable\\utilities_v3.clp")
 (batch "executable\\util_max.clp")
-(batch "executable\\self\\ruletester.clp")
+(batch "executable\\self\\anagram1.clp")
 (run)
 (ask "Enter any value to end")
