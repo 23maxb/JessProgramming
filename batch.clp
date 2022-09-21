@@ -1,5 +1,5 @@
 (batch "executable\\utilities_v3.clp")
 (batch "executable\\util_max.clp")
-(batch "executable\\self\\anagram1.clp")
-(run)
+(batch "executable\\self\\anagram2+3.clp")
+(anagram "acdb")
 (ask "Enter any value to end")
