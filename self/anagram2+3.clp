@@ -1,5 +1,6 @@
 /**
 * Prints out groups of 4 letters without duplicates. 
+* Requires Dr. Nelson's utilities_v3.clp to be batched in before.
 * Length of 4 is used. 
 *
 * @author Dr. Nelson
@@ -27,12 +28,17 @@
 /**
 * Prints out all anagrams of a word of length 4.
 *
-* @param ?word the word to create anagrams of 
+* @return false if the function fails, true otherwise
 */
-(deffunction anagram (?word)
-   (addLetterGroup (slice$ ?word))
-   (run)
-)
+(deffunction anagram ()
+   (bind ?word (ask "Enter 4 letters with no repeats with quotes: "))
+   (if (not (validate ?word)) then
+      (printline "Not four unique letters.")
+    else
+      (addLetterGroup (slice$ ?word))
+      (run)
+   )
+) ; (deffunction anagram())
 
 /**
 * Adds an additional letter to the facts.
@@ -55,7 +61,22 @@
    )
 )
 
-(defrule rule-4 "Enumerate groups of unique letters with length 4"
+/**
+* Returns true if the input is a 4 letter string, otherwise false.
+*
+* @param ?letters the string to validate
+* @return true if the parameter is a string of length 4 otherwise false 
+*/
+(deffunction validate (?letters)
+   (try
+      (return (= (str-length ?letters) 4))
+
+   catch
+      (return FALSE)
+   )
+)
+
+(defrule rule-4 "Enumerate groups of unique letters with length 4."
    (Letter (c ?c1)); each of these are a parameter that will accept a character
    (Letter (c ?c2 &~?c1)); We relist each character to make sure it doesnt reselect the previous characters
    (Letter (c ?c3 &~?c2 &~?c1))
@@ -63,3 +84,13 @@
 =>
    (printout t ?c1 ?c2 ?c3 ?c4 " "); printout the entire anagram
 )
+
+(defrule main "The first entry point into the anagram code. Only calls (anagram)."
+;no left hand side
+;calling (run) will call (anagram)
+=>
+   (anagram)
+)
+
+(reset)
+(run)
