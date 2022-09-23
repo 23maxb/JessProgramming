@@ -28,7 +28,7 @@
 * Prints out all anagrams of a word of length 4.
 *
 * @param ?word the word to create anagrams of 
-*/ 
+*/
 (deffunction anagram (?word)
    (addLetterGroup (slice$ ?word))
    (run)
