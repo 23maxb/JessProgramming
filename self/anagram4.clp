@@ -31,7 +31,7 @@
 * @return false if the function fails, true otherwise
 */
 (deffunction anagram ()
-   (bind ?word (ask "Enter ten or less ascii characters with no repeats with quotes: "))
+   (bind ?word (ask "Enter ten or less ascii characters with no quotes: "))
    (if (not (validate ?word)) then
       (printline "Not ten or less unique ascii characters.")
     else
@@ -78,19 +78,18 @@
 )
 
 (deffunction createAnagramRuleOfLength (?n)
-   (bind ?toRule (str-cat "(defrule anagramLength" ?n " \"Enumerate groups of unique letters with length " ?n ".\"" ))
+   (bind ?toRule (str-cat "(defrule anagramLength" ?n " \"Enumerate groups of letters with length " ?n ".\"" ))
    (for (bind ?i 1) (<= ?i ?n) (++ ?i) 
-      (bind ?toRule (str-cat ?toRule " (Letter (c ?c" ?i))
+      (bind ?toRule (str-cat ?toRule " (Letter (c ?char" ?i ") (p ?position" ?i))
       (for (bind ?j (- ?i 1)) (>= ?j 1) (-- ?j)
-         (bind ?toRule (str-cat ?toRule " &~?c" ?j))
+         (bind ?toRule (str-cat ?toRule " &~?position" ?j))
       )
       (bind ?toRule (str-cat ?toRule "))"))
    )
    (bind ?toRule (str-cat ?toRule " => (printout t"))
    (for (bind ?i 1) (<= ?i ?n) (++ ?i)
-      (bind ?toRule (str-cat ?toRule " ?c" ?i))
+      (bind ?toRule (str-cat ?toRule " ?char" ?i))
    )
-   (printline (str-cat ?toRule " \" \"\))"))
    (build (str-cat ?toRule " \" \"\))"))
 );createAnagramRuleOfLength (?n)
 
@@ -103,5 +102,6 @@
 
 (reset)
 (run)
+(printline "")
 (reset)
 (run)
