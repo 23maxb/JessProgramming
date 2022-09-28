@@ -31,11 +31,12 @@
 * @return false if the function fails, true otherwise
 */
 (deffunction anagram ()
-   (bind ?word (ask "Enter ten or less letters with no repeats with quotes: "))
+   (bind ?word (ask "Enter ten or less ascii characters with no repeats with quotes: "))
    (if (not (validate ?word)) then
-      (printline "Not ten or less unique letters.")
+      (printline "Not ten or less unique ascii characters.")
     else
       (addLetterGroup (slice$ ?word))
+      (createAnagramRuleOfLength (str-length ?word))
       (run)
    )
 ) ; (deffunction anagram())
@@ -78,7 +79,6 @@
 
 (deffunction createAnagramRuleOfLength (?n)
    (bind ?toRule (str-cat "(defrule anagramLength" ?n " \"Enumerate groups of unique letters with length " ?n ".\"" ))
-  
    (for (bind ?i 1) (<= ?i ?n) (++ ?i) 
       (bind ?toRule (str-cat ?toRule " (Letter (c ?c" ?i))
       (for (bind ?j (- ?i 1)) (>= ?j 1) (-- ?j)
@@ -90,25 +90,14 @@
    (for (bind ?i 1) (<= ?i ?n) (++ ?i)
       (bind ?toRule (str-cat ?toRule " ?c" ?i))
    )
-   (printline (str-cat ?toRule " \" \"\))"))
-   ;(build (str-cat ?torule " \" \"\)"))
-)
-
-/*
-(defrule rule-4 "Enumerate groups of unique letters with length 4."
-   (Letter (c ?c1)); each of these are a parameter that will accept a character
-   (Letter (c ?c2 &~?c1)); We relist each character to make sure it doesnt reselect the previous characters
-   (Letter (c ?c3 &~?c2 &~?c1))
-   (Letter (c ?c4 &~?c3 &~?c2 &~?c1))
-=>
-   (printout t ?c1 ?c2 ?c3 ?c4 " "); printout the entire anagram
-)*/
+   (build (str-cat ?toRule " \" \"\))"))
+);createAnagramRuleOfLength (?n)
 
 (defrule main "The first entry point into the anagram code. Only calls (anagram)."
 ;no left hand side
 ;calling (run) will call (anagram)
 =>
-   (createAnagramRuleOfLength 5)
+   (anagram)
 )
 
 (reset)
