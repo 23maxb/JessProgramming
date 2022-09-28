@@ -1,15 +1,14 @@
 /**
-* Prints out groups of 4 letters without duplicates. 
+* Prints out anagrams of any length less than 11. 
 * Requires Dr. Nelson's utilities_v4.clp to be batched in before.
-* Length of 4 is used. 
 *
 * @author Dr. Nelson
 * @author Max Blennemann
-* @version 9/21/22
+* @version 9/28/22
 */
 
 (deftemplate Letter (slot c) (slot p)) ;the type c means the char and the type p means place 
-; p is needed if there are duplicate characters, but since we only use each once it is redundant in this case
+; p is needed if there are duplicate characters
 
 /**
 * Converts any string into a list of characters.
@@ -26,7 +25,7 @@
 )
 
 /**
-* Prints out all anagrams of a word of length 4.
+* Prints out all anagrams of a string of characters equal to or less than 10.
 *
 * @return false if the function fails, true otherwise
 */
@@ -70,7 +69,8 @@
 */
 (deffunction validate (?letters)
    (try
-      (return (<= (str-length ?letters) 10))
+      (return (<= (str-length ?letters) 10)) ;ten is used here because any 
+      ;length greater than 10 overflows the memory stack 
 
    catch
       (return FALSE)
@@ -78,7 +78,7 @@
 )
 
 (deffunction createAnagramRuleOfLength (?n)
-   (bind ?toRule (str-cat "(defrule anagramLength" ?n " \"Enumerate groups of letters with length " ?n ".\"" ))
+   (bind ?toRule (str-cat "(defrule anagramVariableLength" " \"Enumerate groups of letters with length " ?n ".\"" ))
    (for (bind ?i 1) (<= ?i ?n) (++ ?i) 
       (bind ?toRule (str-cat ?toRule " (Letter (c ?char" ?i ") (p ?position" ?i))
       (for (bind ?j (- ?i 1)) (>= ?j 1) (-- ?j)
@@ -100,8 +100,18 @@
    (anagram)
 )
 
+(defrule undefineAnagramLength "Removes anagramVariableLength after the rule has fired once"
+   (declare (salience -1)) 
+   ;we need to undefine the anagram of variable length rule for future runs 
+   =>
+   (undefrule "anagramVariableLength")
+)
+
+
 (reset)
 (run)
+
 (printline "")
+
 (reset)
 (run)
