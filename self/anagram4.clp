@@ -90,6 +90,7 @@
    (for (bind ?i 1) (<= ?i ?n) (++ ?i)
       (bind ?toRule (str-cat ?toRule " ?c" ?i))
    )
+   (printline (str-cat ?toRule " \" \"\))"))
    (build (str-cat ?toRule " \" \"\))"))
 );createAnagramRuleOfLength (?n)
 

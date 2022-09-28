@@ -77,12 +77,12 @@
 )
 
 (defrule rule-4 "Enumerate groups of unique letters with length 4."
-   (Letter (c ?c1)); each of these are a parameter that will accept a character
-   (Letter (c ?c2 &~?c1)); We relist each character to make sure it doesnt reselect the previous characters
-   (Letter (c ?c3 &~?c2 &~?c1))
-   (Letter (c ?c4 &~?c3 &~?c2 &~?c1))
+   (Letter (c ?char1) (p ?c1)); each of these are a parameter that will accept a character
+   (Letter (c ?char2) (p ?c2 &~?c1)); We relist each character to make sure it doesnt reselect the previous characters
+   (Letter (c ?char3) (p ?c3 &~?c2 &~?c1))
+   (Letter (c ?char4) (p ?c4 &~?c3 &~?c2 &~?c1))
 =>
-   (printout t ?c1 ?c2 ?c3 ?c4 " "); printout the entire anagram
+   (printout t ?char1 ?char2 ?char3 ?char4 " "); printout the entire anagram
 )
 
 (defrule main "The first entry point into the anagram code. Only calls (anagram)."
