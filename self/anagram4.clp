@@ -103,3 +103,5 @@
 
 (reset)
 (run)
+(reset)
+(run)
