@@ -77,6 +77,11 @@
    )
 )
 
+/**
+* Defines a new rule that will create many anagrams using letters that were predefined.
+*
+* @param ?n the length to use for the new rule
+*/
 (deffunction createAnagramRuleOfLength (?n)
    (bind ?toRule (str-cat "(defrule anagramVariableLength" " \"Enumerate groups of letters with length " ?n ".\"" ))
    (for (bind ?i 1) (<= ?i ?n) (++ ?i) 
@@ -100,18 +105,9 @@
    (anagram)
 )
 
-(defrule undefineAnagramLength "Removes anagramVariableLength after the rule has fired once"
+(defrule undefineAnagramLength "Removes anagramVariableLength after the rule has fired once."
    (declare (salience -1)) 
    ;we need to undefine the anagram of variable length rule for future runs 
    =>
    (undefrule "anagramVariableLength")
 )
-
-
-(reset)
-(run)
-
-(printline "")
-
-(reset)
-(run)
