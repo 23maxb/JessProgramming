@@ -52,29 +52,44 @@
 )
 
 (deffunction gameOver (?win)
-   (if ?win
+   (if (= (asc (sub-string 1 1 ?win)) (asc "y")) then
+      (bind ?val TRUE)
+    else 
+      (if (= (asc (sub-string 1 1 ?win)) (asc "n")) then
+         (bind ?val FALSE)
+      )
+   )
+   (if ?win then
       (printline "I won! :)")
-      else
-      (printline "I lost. :(.")
+    else
+      (printline "I lost. :(")
    )
    (clear)
    (reset)
 )
 
+(deffunction getAnimalData (?fileName)
+   (open ?fileName r)
+   (printout t)
+  ; (createAnimal (readline))
+)
+
 (deffunction createAnimal (?name ?data*)
    (bind ?toRule (str-cat "(defrule " ?name " \"The rule that checks to see if the animal is a " ?name "\" "))
    ;(bind ?toRule (attribute (question) (value)))
+   
+   
+   (printline (str-cat ?toRule "=>(gameOver (ask \"Is your animal a " ?name "?\")))"))
 
-   (printline (str-cat ?toRule "=> (ask \"Is your animal a " ?name "?\"))"
-)
-)
+   )
 
+/*
 (defrule cow
    (attribute (question ?q) (value ?v))
    
    =>
-   (ask "Is your animal a cow")
-)
+   (gameOver (ask "Is your animal a cow"))
+)*/
 
 
-(createAnimal "cow" "a")
+(getAnimalData "animalListAndAttributes.csv")
