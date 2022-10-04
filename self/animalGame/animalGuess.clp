@@ -51,21 +51,30 @@
    (assert (attribute (question ?question) (value ?val)))
 )
 
-(defrule animalWin "Runs if an animal is selected"
-
+(deffunction gameOver (?win)
+   (if ?win
+      (printline "I won! :)")
+      else
+      (printline "I lost. :(.")
+   )
+   (clear)
+   (reset)
 )
 
 (deffunction createAnimal (?name ?data*)
    (bind ?toRule (str-cat "(defrule " ?name " \"The rule that checks to see if the animal is a " ?name "\" "))
-   (attribute (question) (value))
+   ;(bind ?toRule (attribute (question) (value)))
+
+   (printline (str-cat ?toRule "=> (ask \"Is your animal a " ?name "?\"))"
+)
 )
 
 (defrule cow
    (attribute (question ?q) (value ?v))
    
    =>
-   (ask "is your animal a cow")
+   (ask "Is your animal a cow")
 )
 
 
-(requestInfo "a: ")
+(createAnimal "cow" "a")
