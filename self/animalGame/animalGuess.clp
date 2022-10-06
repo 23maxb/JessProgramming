@@ -37,6 +37,35 @@
    "21. Does your animal have a bill?"
 ))
 
+/**
+** Checks if two strings are equal.
+** 
+** @param ?str1 
+*/
+(deffunction str-eq (?str1 ?str2)
+   (return (= (str-compare (str-cat ?str1) (str-cat ?str2)) 0))
+)
+
+/**
+** Splits a string by the ?splitter
+** 
+** written by andrew fox and modified by me
+*/
+(deffunction split$ (?str ?splitter)
+   (bind ?list (create$))
+   (bind ?currentString "")
+   (for (bind ?i 1) (<= ?i (str-length ?str)) (++ ?i)
+      (bind ?addToEnd (sub-string ?i ?i ?str))
+      (if (str-eq ?addToEnd ?splitter) then
+         (bind ?list (insert$ ?list (+ (length$ ?list) 1) ?currentString))
+         (bind ?currentString "")
+      else
+         (bind ?currentString (str-cat ?currentString ?addToEnd))
+      )
+   )
+   (return (insert$ ?list (+ (length$ ?list) 1) ?currentString))
+)
+
 (deffunction requestInfo (?question)
    (bind ?response (ask ?question))
    (bind ?val 2)
@@ -70,14 +99,26 @@
 
 (deffunction getAnimalData (?fileName)
    (open ?fileName r)
-   (printout t)
-  ; (createAnimal (readline))
+   (bind ?animalDataLoading TRUE)
+   (while ?animalDataLoading
+      (try
+         (createAnimal (split$ (readline r) ","))
+
+      catch
+         ;ignore eof reached
+         (printline "Animal Data loaded as rules.")
+         (bind ?animalDataLoading FALSE)
+      )
+   ) 
 )
 
-(deffunction createAnimal (?name ?data*)
+(deffunction createAnimal (?name $data)
    (bind ?toRule (str-cat "(defrule " ?name " \"The rule that checks to see if the animal is a " ?name "\" "))
    ;(bind ?toRule (attribute (question) (value)))
    
+   (for (bind ?i 2) (<= ?i (str-length ?str)) (++ ?i)
+      (bind ?toRule (str-cat "(attribute (question ?q" ?i " & \"" (nth$ (- ?i 1) 1 ?*PossibleQuestions*) "\") (value ?v" ?i " & " (nth$ ?i $data)))
+   )
    
    (printline (str-cat ?toRule "=>(gameOver (ask \"Is your animal a " ?name "?\")))"))
 
@@ -85,7 +126,12 @@
 
 /*
 (defrule cow
-   (attribute (question ?q) (value ?v))
+   (attribute (question ?q1 & "questionhere1") (value ?v1 & 1))
+   (attribute (question ?q2 & "questionhere2") (value ?v2 & 1))
+   (attribute (question ?q3 & "questionhere3") (value ?v3 & 1))
+   (attribute (question ?q4 & "questionhere4") (value ?v4 & 1))
+   (attribute (question ?q5 & "questionhere5") (value ?v5 & 1))
+   (attribute (question ?q6 & "questionhere6") (value ?v6 & 1))
    
    =>
    (gameOver (ask "Is your animal a cow"))
