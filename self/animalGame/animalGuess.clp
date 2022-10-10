@@ -37,6 +37,8 @@
    "21. Does your animal have a bill?"
 )) ; (defglobal ?*PossibleQuestions* = (create$ 
 
+(defglobal ?*QuestionNum* = 1)
+
 /**
 ** Checks if two strings are equal.
 ** Will also convert non string things to strings to compare.
@@ -179,7 +181,7 @@
 ) ; (deffunction createAnimal (?data)
 
 (defrule hasFur "Removes other possibilities if the animal has fur."
-   (attribute (question (nth$ 3 ?*PossibleQuestions*)) (value 1))
+   (attribute (question :(nth$ 3 ?*PossibleQuestions*)) (value 1))
    =>
    (bind ?turnFalse (create$ 5 12 13 14 15 20 21))
    (bind ?turnTrue (create$))
@@ -192,15 +194,15 @@
 )
 
 (defrule hasWool "Removes other possibilities if the animal has wool."
-   (attribute (question (nth$ 3 ?*PossibleQuestions*)) (value 1))
+   (attribute (question ?q1 & :(nth$ 3 ?*PossibleQuestions*)) (value ?v1 & 1))
    =>
    (bind ?turnFalse (create$ 3 12 13 14 15 20 21))
    (bind ?turnTrue (create$))
    (for (bind ?i 1) (<= ?i (length$ ?turnFalse)) (++ ?i)
       (assert (attribute (question (nth$ (nth$ ?i ?turnFalse) ?*PossibleQuestions*)) (value 0)))
    )
-   (for (bind ?i 1) (<= ?i (length$ ?turnTrue) (++ ?i)
-      (assert (attribute (question (nth$ (nth$ ?i ?turnFalse) ?*PossibleQuestions*)) (value 1))))
+   (for (bind ?i 1) (<= ?i (length$ ?turnTrue)) (++ ?i)
+      (assert (attribute (question (nth$ (nth$ ?i ?turnFalse) ?*PossibleQuestions*)) (value 1)))
    )
 )
 
@@ -208,9 +210,19 @@
    (declare (salience 1))
 
    =>
+
    (getAnimalData "animalListAndAttributes.csv")
-   (for (bind ?i 1) (<= ?i (length$ ?*PossibleQuestions*)) (++ ?i)
-      (requestInfo (nth$ ?i ?*PossibleQuestions*))
+   (assert (attribute (question "start")))
+)
+
+(defrule askNextQuestion "Asks the user for the next attribute."
+   (declare (salience -1))
+   (attribute)
+   =>
+   (printline ?*QuestionNum*)
+   (if (<= ?*QuestionNum* (length$ ?*PossibleQuestions*)) then
+      (++ ?*QuestionNum*)
+      (requestInfo (nth$ (- ?*QuestionNum* 1) ?*PossibleQuestions*))
    )
 )
    
