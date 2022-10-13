@@ -1,8 +1,15 @@
-(clear)
-(reset)
+/**
+* Plays an animal game with the user.
+* Requires Dr. Nelson's utilities_v4.clp to be batched in before.
+*
+* @author Max Blennemann
+* @version 10/10/22
+*/
 
-(defglobal ?*finished* =FALSE)
+;Checks whether the game is finished or not
+(defglobal ?*finished* = FALSE)
 
+;Defines the template for any information about the animal
 (deftemplate attribute (slot name) (slot value))
 
 (defrule cow
@@ -11,22 +18,42 @@
    (attribute (name "domesticated") (value TRUE))
    (attribute (name "hooves") (value TRUE))
    (attribute (name "horns") (value TRUE))
+   (attribute (name "wool") (value FALSE))
    =>
    (verify "cow")
 )
+
+(defrule end "Runs if the program cant guess the animal."
+      (declare (salience -1))
+   =>
+      (printline "I don't know. I lose.")
+)
+
+(defrule startingPrompt
+   "prompts the user"
+   (declare (salience 99))
+   =>
+   (printline "Answer each question with yes or no.")
+)
+
 (defrule sheep
    "selects for a sheep"
    (test (= ?*finished* FALSE))
+   (attribute (name "domesticated") (value TRUE))
+   (attribute (name "hooves") (value TRUE))
+   (attribute (name "horns") (value TRUE))
    (attribute (name "wool") (value TRUE))
    =>
    (verify "sheep")
 )
+
 (defrule chicken
    "selects for a chicken"
    (test (= ?*finished* FALSE))
    (attribute (name "domesticated") (value TRUE))
-   (attribute (name "hooves") (value TRUE))
    (attribute (name "wings") (value TRUE))
+   (attribute (name "hooves") (value FALSE))
+   (attribute (name "horns") (value FALSE))
    =>
    (verify "chicken")
 )
@@ -35,47 +62,143 @@
    "selects for a beaver"
    (test (= ?*finished* FALSE))
    (attribute (name "aquatic") (value TRUE))
-   (attribute (name "damns") (value TRUE))
+   (attribute (name "dams") (value TRUE))
    =>
    (verify "beaver")
 )
 
-(defrule getSnout
-   "gets whether the animal has a snout"
+(defrule getAquatic
+   "gets whether the animal is aquatic"
    (test (= ?*finished* FALSE))
+   (not (attribute (name "aquatic")))
    =>
-   (printout t "Does your animal have a snout?")
-   (assert (attribute (name "snout") (value (getbool))))
-)
-
-(defrule getSnout
-   "gets whether the animal has a snout"
-   (test (= ?*finished* FALSE))
-   =>
-   (printout t "Does your animal have a snout?")
-   (assert (attribute (name "snout") (value (getbool))))
-)
-
-(deffunction vowelp (?letter)
-   (return (or (= ?letter "a") (= ?letter "e") (= ?letter "i") (= ?letter "o") (= ?letter "u")))
-)
-
-(deffunction getbool ()
-   (return (= (sub-string 1 1 (sym-cat (read))) "y"))
-)
-
-(deffunction verify (?name)
-   (printout t "Is your animal a")
-   (if (vowelp (sub-string 1 1 ?name)) then
-      (printout t "n")
+   (printout t "Is your animal aquatic?")
+   (bind ?a (getbool))
+   (assert (attribute (name "aquatic") (value ?a)))
+   (if ?a then
+      (assert (attribute (name "wings") (value (not ?a))))
+      (assert (attribute (name "wool") (value (not ?a))))
+      (assert (attribute (name "hooves") (value (not ?a))))
+      (assert (attribute (name "horns") (value (not ?a))))
    )
-   (printout t " " ?name "? ")
+)
+
+(defrule getWool
+   "gets whether the animal has wool"
+   (test (= ?*finished* FALSE))
+   (not (attribute (name "wool")))
+   =>
+   (printout t "Does your animal have wool?")
+   (bind ?a (getbool))
+   (assert (attribute (name "wool") (value ?a)))
+   (if ?a then
+      (assert (attribute (name "aquatic") (value (not ?a))))
+      (assert (attribute (name "wings") (value (not ?a))))
+      (assert (attribute (name "dams") (value (not ?a))))
+   )
+)
+
+(defrule getHooves
+   "gets whether the animal has hooves"
+   (test (= ?*finished* FALSE))
+   (not (attribute (name "hooves")))
+   =>
+   (printout t "Does your animal have hooves?")
+   (bind ?a (getbool))
+   (assert (attribute (name "hooves") (value ?a)))
+   (if ?a then
+      (assert (attribute (name "aquatic") (value (not ?a))))
+      (assert (attribute (name "wings") (value (not ?a))))
+      (assert (attribute (name "dams") (value (not ?a))))
+   )
+)
+
+(defrule getHorns
+   "gets whether the animal has horns"
+   (test (= ?*finished* FALSE))
+   (not (attribute (name "horns")))
+   =>
+   (printout t "Does your animal have horns?")
+   (bind ?a (getbool))
+   (assert (attribute (name "horns") (value ?a)))
+   (if ?a then
+      (assert (attribute (name "aquatic") (value (not ?a))))
+      (assert (attribute (name "wings") (value (not ?a))))
+      (assert (attribute (name "dams") (value (not ?a))))
+   )
+)
+
+(defrule getWings
+   "gets whether the animal has wings" 
+   (test (= ?*finished* FALSE))
+   (not (attribute (name "wings")))
+   =>
+   (printout t "Does your animal have wings?")
+   (bind ?a (getbool))
+   (assert (attribute (name "wings") (value ?a)))
+   (if ?a then
+      (assert (attribute (name "dams") (value (not ?a))))
+      (assert (attribute (name "hooves") (value (not ?a))))
+      (assert (attribute (name "horns") (value (not ?a))))
+      (assert (attribute (name "wings") (value (not ?a))))
+   )
+)
+
+(defrule getDams
+   "gets whether the animal builds dams"
+   (test (= ?*finished* FALSE))
+   (not (attribute (name "dams")))
+   =>
+   (printout t "Does your animal build dams?")
+   (bind ?a (getbool))
+   (assert (attribute (name "dams") (value ?a)))
+   (if ?a then
+      (assert (attribute (name "wings") (value (not ?a))))
+      (assert (attribute (name "hooves") (value (not ?a))))
+      (assert (attribute (name "horns") (value (not ?a))))
+      (assert (attribute (name "wool") (value (not ?a))))
+   )
+)
+
+(defrule getDomesticated
+   "gets whether the animal is domesticated"
+   (test (= ?*finished* FALSE))
+   (not (attribute (name "domesticated")))
+   =>
+   (printout t "Is your animal domesticated?")
+   (bind ?a (getbool))
+   (assert (attribute (name "domesticated") (value ?a)))
+   (if ?a then
+      (assert (attribute (name "dams") (value (not ?a))))
+   )
+)
+
+/**
+** Gets user input by checking whether the first letter of what the user put was y.
+** Ignores case.
+** 
+** @return true if the given string starts with y or Y
+** otherwise false.
+*/
+(deffunction getbool ()
+   (return (= (lowcase (sub-string 1 1 (sym-cat (read)))) "y"))
+)
+
+/**
+** Only called by rules. Checks whether the animal ?name is the animal the program is trying to guess. 
+** Halts the program whether the guess was right or wrong.
+** 
+** @param ?name the name of the animal to check
+*/
+(deffunction verify (?name)
+   (printout t (str-cat "Is your animal a(n) " ?name "? "))
    (bind ?*finished* TRUE)
    (if (getbool) then
       (printout t "I win!" crlf)
     else
       (printout t "I lose." crlf)
    )
+   (halt)
 )
 
 (run)
