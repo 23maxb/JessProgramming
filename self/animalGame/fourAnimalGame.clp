@@ -6,6 +6,10 @@
 * @version 10/10/22
 */
 
+(clear)
+(reset)
+(batch "executable\\utilities_v4.clp")
+
 ;Checks whether the game is finished or not
 (defglobal ?*finished* = FALSE)
 
@@ -16,8 +20,6 @@
    "selects for a cow"
    (test (= ?*finished* FALSE))
    (attribute (name "domesticated") (value TRUE))
-   (attribute (name "hooves") (value TRUE))
-   (attribute (name "horns") (value TRUE))
    (attribute (name "wool") (value FALSE))
    =>
    (verify "cow")
@@ -40,8 +42,6 @@
    "selects for a sheep"
    (test (= ?*finished* FALSE))
    (attribute (name "domesticated") (value TRUE))
-   (attribute (name "hooves") (value TRUE))
-   (attribute (name "horns") (value TRUE))
    (attribute (name "wool") (value TRUE))
    =>
    (verify "sheep")
@@ -52,8 +52,6 @@
    (test (= ?*finished* FALSE))
    (attribute (name "domesticated") (value TRUE))
    (attribute (name "wings") (value TRUE))
-   (attribute (name "hooves") (value FALSE))
-   (attribute (name "horns") (value FALSE))
    =>
    (verify "chicken")
 )
@@ -61,7 +59,6 @@
 (defrule beaver
    "selects for a beaver"
    (test (= ?*finished* FALSE))
-   (attribute (name "aquatic") (value TRUE))
    (attribute (name "dams") (value TRUE))
    =>
    (verify "beaver")
@@ -74,12 +71,10 @@
    =>
    (printout t "Is your animal aquatic?")
    (bind ?a (getbool))
-   (assert (attribute (name "aquatic") (value ?a)))
+   (assert (attribute (name "dams") (value ?a)))
    (if ?a then
       (assert (attribute (name "wings") (value (not ?a))))
       (assert (attribute (name "wool") (value (not ?a))))
-      (assert (attribute (name "hooves") (value (not ?a))))
-      (assert (attribute (name "horns") (value (not ?a))))
    )
 )
 
@@ -98,36 +93,6 @@
    )
 )
 
-(defrule getHooves
-   "gets whether the animal has hooves"
-   (test (= ?*finished* FALSE))
-   (not (attribute (name "hooves")))
-   =>
-   (printout t "Does your animal have hooves?")
-   (bind ?a (getbool))
-   (assert (attribute (name "hooves") (value ?a)))
-   (if ?a then
-      (assert (attribute (name "aquatic") (value (not ?a))))
-      (assert (attribute (name "wings") (value (not ?a))))
-      (assert (attribute (name "dams") (value (not ?a))))
-   )
-)
-
-(defrule getHorns
-   "gets whether the animal has horns"
-   (test (= ?*finished* FALSE))
-   (not (attribute (name "horns")))
-   =>
-   (printout t "Does your animal have horns?")
-   (bind ?a (getbool))
-   (assert (attribute (name "horns") (value ?a)))
-   (if ?a then
-      (assert (attribute (name "aquatic") (value (not ?a))))
-      (assert (attribute (name "wings") (value (not ?a))))
-      (assert (attribute (name "dams") (value (not ?a))))
-   )
-)
-
 (defrule getWings
    "gets whether the animal has wings" 
    (test (= ?*finished* FALSE))
@@ -138,8 +103,6 @@
    (assert (attribute (name "wings") (value ?a)))
    (if ?a then
       (assert (attribute (name "dams") (value (not ?a))))
-      (assert (attribute (name "hooves") (value (not ?a))))
-      (assert (attribute (name "horns") (value (not ?a))))
       (assert (attribute (name "wings") (value (not ?a))))
    )
 )
@@ -154,14 +117,13 @@
    (assert (attribute (name "dams") (value ?a)))
    (if ?a then
       (assert (attribute (name "wings") (value (not ?a))))
-      (assert (attribute (name "hooves") (value (not ?a))))
-      (assert (attribute (name "horns") (value (not ?a))))
       (assert (attribute (name "wool") (value (not ?a))))
    )
 )
 
 (defrule getDomesticated
    "gets whether the animal is domesticated"
+   (declare (salience 90))
    (test (= ?*finished* FALSE))
    (not (attribute (name "domesticated")))
    =>
