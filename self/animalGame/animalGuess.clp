@@ -7,6 +7,7 @@
 */
 
 (deftemplate attribute (slot question) (slot value))
+(do-backward-chaining attribute)
 ;value is integer
 ;-1 is not set
 ; 0 is no
@@ -20,21 +21,21 @@
    "4. Does your animal have horns?"
    "5. Does your animal have wool?"
    "6. Does your animal have hooves?"
-   "7. Is your animal a rodent?"
+   "7. Does your animal have many different colors?"
    "8. Does your animal eat meat?"
    "9. Is your animal aquatic?"
    "10. Can your animal fly?"
    "11. Does your animal have wings?"
    "12. Is your animal a type of fish?"
-   "13. Is your animal a cephalopod?"
-   "14. Is your animal a type of lizard?"
-   "15. Is your animal a type of crustacean?"
+   "13. Is your animal a decapods?"
+   "14. Is your animal a type of reptile?"
+   "15. Does your animal lay eggs?"
    "16. Does your animal have bones?"
    "17. Does your animal build structures?"
    "18. Does your animal have a tail?"
    "19. Does your animal have legs?"
    "20. Does your animal have fins?"
-   "21. Does your animal have a bill?"
+   "21. Does your animal have a bill or beak?"
 )) ; (defglobal ?*PossibleQuestions* = (create$ 
 
 (defglobal ?*QuestionNum* = 1)
@@ -121,15 +122,14 @@
 (deffunction getAnimalData (?fileName)
    (open ?fileName r)
    (bind ?animalDataLoading TRUE)
-   (for (bind ?i 1) (<= ?i 4) (++ ?i) ; only loads in the first 4 animals
-      ;(try
-         (createAnimal (split$ (readline r) ","))
-/*
-      catch
-         ;ignore eof reached
+   (while ?animalDataLoading
+      (bind ?inputRead (readline r)) 
+      (if (not (str-eq ?inputRead "EOF")) then
+         (createAnimal (split$ ?inputRead ","))
+      else
          (printline "Animal Data loaded as rules.")
          (bind ?animalDataLoading FALSE)
-      )*/
+      )
    )
 ) ; (deffunction getAnimalData (?fileName)
 
@@ -177,8 +177,14 @@
    )
    (printline (str-cat "Building the rule for a " (nth$ 1 ?data) "."))
    (build (str-cat ?toRule "=>(gameOver (ask \"Is your animal a " (nth$ 1 ?data) "?\")))"))
-
 ) ; (deffunction createAnimal (?data)
+
+(deffunction buildInfoRules (?listOfQuestions)
+   (for (bind ?i 1) (<= ?i (length$ ?listOfQuestions)) (++ ?i)
+      (bind ?toRule (str-cat "(defrule " (nth$ 1 ?data) " \"The rule that checks to see if the animal is a " (nth$ 1 ?data) "\" 
+   "))
+   )
+)
 
 (defrule main "The starting point for the game."
    (declare (salience 1))
@@ -189,6 +195,10 @@
    (assert (attribute (question "start")))
 )
 
+/**
+** Eventually need to remove this
+** 
+*/
 (defrule askNextQuestion "Asks the user for the next attribute."
    (declare (salience -1))
    (attribute)
@@ -208,3 +218,5 @@
 
 (reset)
 (run)
+(facts)
+(rules)

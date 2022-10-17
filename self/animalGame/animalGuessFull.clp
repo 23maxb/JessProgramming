@@ -74,24 +74,6 @@
 ) ; (deffunction split$ (?str ?splitter)
 
 /**
-** Asks the user a question and records the answer in the fact base.
-** 
-** @param ?question the question to ask
-*/
-(deffunction requestInfo (?question)
-   (bind ?response (ask ?question))
-   (bind ?val 2)
-   (if (= (asc (sub-string 1 1 ?response)) (asc "y")) then
-      (bind ?val 1)
-      else 
-      (if (= (asc (sub-string 1 1 ?response)) (asc "n")) then
-         (bind ?val 0)
-      )
-   )
-   (assert (attribute (question ?question) (value ?val)))
-); (deffunction requestInfo (?question)
-
-/**
 ** Concludes the game. 
 ** 
 ** @param ?win whether or not the computer has successfully determined the animal.
@@ -161,7 +143,8 @@
    (attribute (question ?q20 & "20. Does your animal have fins?") (value ?v20 & 0))
    (attribute (question ?q21 & "21. Does your animal have a bill?") (value ?v21 & 0))
    =>
-   (gameOver (ask "Is your animal a Cow?"))
+   (gameOver (ask "Is your animal a Cow?")
+)
 ) ; (defrule Cow "The rule that checks to see if the animal is a Cow")
 ** 
 ** @param ?data a list with the data 
@@ -180,6 +163,7 @@
 
 ) ; (deffunction createAnimal (?data)
 
+
 (defrule main "The starting point for the game."
    (declare (salience 1))
 
@@ -187,17 +171,6 @@
 
    (getAnimalData "animalListAndAttributes.csv")
    (assert (attribute (question "start")))
-)
-
-(defrule askNextQuestion "Asks the user for the next attribute."
-   (declare (salience -1))
-   (attribute)
-   =>
-   (printline ?*QuestionNum*)
-   (if (<= ?*QuestionNum* (length$ ?*PossibleQuestions*)) then
-      (++ ?*QuestionNum*)
-      (requestInfo (nth$ (- ?*QuestionNum* 1) ?*PossibleQuestions*))
-   )
 )
    
 (defrule end "The ending point of the game."
