@@ -21,7 +21,7 @@
    "4. Does your animal have horns?"
    "5. Does your animal have wool?"
    "6. Does your animal have hooves?"
-   "7. Does your animal have many different colors?"
+   "7. Does your animal have more than one color?"
    "8. Does your animal eat meat?"
    "9. Is your animal aquatic?"
    "10. Can your animal fly?"
@@ -38,7 +38,10 @@
    "21. Does your animal have a bill or beak?"
 )) ; (defglobal ?*PossibleQuestions* = (create$ 
 
-(defglobal ?*QuestionNum* = 1)
+;use (split$ ?inputRead ",") to access the data as a 2d array
+(defglobal ?*AnimalData* = 
+   (create$)
+)
 
 /**
 ** Checks if two strings are equal.
@@ -125,6 +128,7 @@
    (while ?animalDataLoading
       (bind ?inputRead (readline r)) 
       (if (not (str-eq ?inputRead "EOF")) then
+         (bind ?*AnimalData* (insert$ ?*AnimalData* (+ 1 (length$ ?*AnimalData*)) ?inputRead))
          (createAnimal (split$ ?inputRead ","))
       else
          (printline "Animal Data loaded as rules.")
@@ -170,46 +174,38 @@
    (bind ?toRule (str-cat "(defrule " (nth$ 1 ?data) " \"The rule that checks to see if the animal is a " (nth$ 1 ?data) "\" 
    "))
    (for (bind ?i 2) (<= ?i (length$ ?data)) (++ ?i)
-      (bind ?toRule (str-cat ?toRule "(attribute (question ?q" (- ?i 1) " & \"" 
-      (nth$ (- ?i 1) ?*PossibleQuestions*) "\") (value ?v" (- ?i 1) " & " (nth$ ?i ?data) "))
+      (bind ?toRule (str-cat ?toRule "(attribute (question \"" 
+      (nth$ (- ?i 1) ?*PossibleQuestions*) "\") (value " (nth$ ?i ?data) "))
       ")
       )
    )
-   (printline (str-cat "Building the rule for a " (nth$ 1 ?data) "."))
+   (printline (str-cat "Building the rule for a " (nth$ 1 ?data)))
    (build (str-cat ?toRule "=>(gameOver (ask \"Is your animal a " (nth$ 1 ?data) "?\")))"))
 ) ; (deffunction createAnimal (?data)
 
-(deffunction buildInfoRules (?listOfQuestions)
-   (for (bind ?i 1) (<= ?i (length$ ?listOfQuestions)) (++ ?i)
-      (bind ?toRule (str-cat "(defrule " (nth$ 1 ?data) " \"The rule that checks to see if the animal is a " (nth$ 1 ?data) "\" 
-   "))
+(deffunction createQuestionRule (?questionNumber)
+   (printline (str-cat "Building rule for the question " (nth$ (- ?questionNumber) ?*PossibleQuestions*) "."))
+   (build 
+      (str-cat "(defrule askQuestionNumber" ?questionNumber " \"The rule that will ask the user to resolve the attribute for question id " ?questionNumber ".\"
+         (need-attribute (question \"" (nth$ (- ?questionNumber) ?*PossibleQuestions*) "\"))
+         =>
+         (requestInfo (nth$ " ?questionNumber " ?*PossibleQuestions*))
+         )"
+      )
    )
 )
 
 (defrule main "The starting point for the game."
-   (declare (salience 1))
 
    =>
 
    (getAnimalData "animalListAndAttributes.csv")
-   (assert (attribute (question "start")))
-)
-
-/**
-** Eventually need to remove this
-** 
-*/
-(defrule askNextQuestion "Asks the user for the next attribute."
-   (declare (salience -1))
-   (attribute)
-   =>
-   (printline ?*QuestionNum*)
-   (if (<= ?*QuestionNum* (length$ ?*PossibleQuestions*)) then
-      (++ ?*QuestionNum*)
-      (requestInfo (nth$ (- ?*QuestionNum* 1) ?*PossibleQuestions*))
+   (for (bind ?i 1) (<= ?i (length$ ?*PossibleQuestions*)) (++ ?i)
+      (createQuestionRule ?i)
    )
+   (printline "Completed the rule creation of question rules.")
 )
-   
+  
 (defrule end "The ending point of the game."
       (declare (salience -1))
    =>
@@ -218,5 +214,3 @@
 
 (reset)
 (run)
-(facts)
-(rules)
