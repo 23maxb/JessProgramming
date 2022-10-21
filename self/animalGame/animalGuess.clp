@@ -1,6 +1,7 @@
 /**
 * Plays an animal game with the user.
-* Requires Dr. Nelson's utilities_v4.clp to be batched in before.
+* Requires Dr. Nelson's utilities_v4.clp to be batched in before. (batch "executable\\utilities_v4.clp")
+* To run this file within the jess terminal run (batch "executable\\self\\animalGame\\animalGuess.clp")
 *
 * @author Max Blennemann
 * @version 10/6/22
@@ -183,6 +184,12 @@
    (build (str-cat ?toRule "=>(gameOver (ask \"Is your animal a " (nth$ 1 ?data) "?\")))"))
 ) ; (deffunction createAnimal (?data)
 
+/**
+** Builds all the rules needed for asking the questions about the game.
+** 
+** 
+** @param ?questionNumber the question number to ask
+**/
 (deffunction createQuestionRule (?questionNumber)
    (printline (str-cat "Building rule for the question " (nth$ (- ?questionNumber) ?*PossibleQuestions*) "."))
    (build 
