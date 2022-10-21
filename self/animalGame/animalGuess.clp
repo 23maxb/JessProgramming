@@ -83,8 +83,9 @@
 ** 
 ** @param ?question the question to ask
 */
-(deffunction requestInfo (?question)
-   (bind ?response (ask ?question))
+(deffunction requestInfo (?questionNumber)
+   (retract-string (str-cat "(need-attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\"))"))
+   (bind ?response (ask (nth$ ?questionNumber ?*PossibleQuestions*)))
    (bind ?val 2)
    (if (= (asc (sub-string 1 1 ?response)) (asc "y")) then
       (bind ?val 1)
@@ -93,7 +94,14 @@
          (bind ?val 0)
       )
    )
-   (assert (attribute (question ?question) (value ?val)))
+   (for (bind ?i 1) (<= ?i (length$ ?*AnimalData*)) (++ ?i) 
+      (bind ?thisAnimalData (split$ (nth$ ?i ?*AnimalData*) ","))
+      (if (not (str-eq ?val (nth$ (+ ?questionNumber 1) ?thisAnimalData))) then
+         (undefrule (nth$ 1 ?thisAnimalData))
+         (bind ?*AnimalData* (delete$ ?*AnimalData* ?i ?i))
+      )
+   )
+   (assert (attribute (question (nth$ ?questionNumber ?*PossibleQuestions*)) (value ?val)))
 ); (deffunction requestInfo (?question)
 
 /**
@@ -181,7 +189,19 @@
       )
    )
    (printline (str-cat "Building the rule for a " (nth$ 1 ?data)))
-   (build (str-cat ?toRule "=>(gameOver (ask \"Is your animal a " (nth$ 1 ?data) "?\")))"))
+   (build (str-cat ?toRule "=>
+   (if (= 2 (length$ ?*AnimalData*))
+      (bind ?response (ask \"Does the name of your animal rhyme with \"))
+      (bind ?val 2)
+      (if (= (asc (sub-string 1 1 ?response)) (asc \"y\")) then
+      (bind ?val 1)
+      else 
+      (if (= (asc (sub-string 1 1 ?response)) (asc \"n\")) then
+         (bind ?val 0)
+      )
+   )
+   )
+   (gameOver (ask \"Is your animal a " (nth$ 1 ?data) "?\")))"))
 ) ; (deffunction createAnimal (?data)
 
 /**
@@ -194,10 +214,10 @@
    (printline (str-cat "Building rule for the question " (nth$ (- ?questionNumber) ?*PossibleQuestions*) "."))
    (build 
       (str-cat "(defrule askQuestionNumber" ?questionNumber " \"The rule that will ask the user to resolve the attribute for question id " ?questionNumber ".\"
-         (need-attribute (question \"" (nth$ (- ?questionNumber) ?*PossibleQuestions*) "\"))
-         =>
-         (requestInfo (nth$ " ?questionNumber " ?*PossibleQuestions*))
-         )"
+                  (need-attribute (question \"" (nth$ (- ?questionNumber) ?*PossibleQuestions*) "\"))
+                =>
+                  (requestInfo " ?questionNumber ")
+                )"
       )
    )
 )
@@ -221,3 +241,4 @@
 
 (reset)
 (run)
+(printline ?*AnimalData*)
