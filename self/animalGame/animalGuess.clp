@@ -102,6 +102,7 @@
       )
    )
    (assert (attribute (question (nth$ ?questionNumber ?*PossibleQuestions*)) (value ?val)))
+   (return (= ?val 1))
 ); (deffunction requestInfo (?question)
 
 /**
@@ -190,18 +191,10 @@
    )
    (printline (str-cat "Building the rule for a " (nth$ 1 ?data)))
    (build (str-cat ?toRule "=>
-   (if (= 2 (length$ ?*AnimalData*))
-      (bind ?response (ask \"Does the name of your animal rhyme with \"))
-      (bind ?val 2)
-      (if (= (asc (sub-string 1 1 ?response)) (asc \"y\")) then
-      (bind ?val 1)
-      else 
-      (if (= (asc (sub-string 1 1 ?response)) (asc \"n\")) then
-         (bind ?val 0)
-      )
-   )
-   )
-   (gameOver (ask \"Is your animal a " (nth$ 1 ?data) "?\")))"))
+   (bind ?victory TRUE)
+   (if ?victory then
+      (gameOver (ask \"Is your animal a " (nth$ 1 ?data) "?\"))
+   ))"))
 ) ; (deffunction createAnimal (?data)
 
 /**
@@ -214,12 +207,23 @@
    (printline (str-cat "Building rule for the question " (nth$ (- ?questionNumber) ?*PossibleQuestions*) "."))
    (build 
       (str-cat "(defrule askQuestionNumber" ?questionNumber " \"The rule that will ask the user to resolve the attribute for question id " ?questionNumber ".\"
-                  (need-attribute (question \"" (nth$ (- ?questionNumber) ?*PossibleQuestions*) "\"))
+                  (need-attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\"))
                 =>
-                  (requestInfo " ?questionNumber ")
+                  (getAutoAssert " ?questionNumber " (requestInfo " ?questionNumber "))
+                  
                 )"
       )
    )
+)
+
+(deffunction getAutoAssert (?questionNumber ?val)
+   (printline (str-cat "Autocompleting database for question number " ?questionNumber))
+   (printline (nth$ ?questionNumber ?*PossibleQuestions*))
+
+   (for (bind ?i 1) (<= ?i (length$ ?*AnimalData*)) (++ ?i) 
+      (nth$ (+ ?i 1) ?*AnimalData*)
+   )
+   (return "")
 )
 
 (defrule main "The starting point for the game."
