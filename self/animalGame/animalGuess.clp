@@ -84,6 +84,7 @@
 ** @param ?question the question to ask
 */
 (deffunction requestInfo (?questionNumber)
+(facts)
    (retract-string (str-cat "(need-attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\"))"))
    (bind ?response (ask (nth$ ?questionNumber ?*PossibleQuestions*)))
    (bind ?val 2)
@@ -98,7 +99,10 @@
       (bind ?thisAnimalData (split$ (nth$ ?i ?*AnimalData*) ","))
       (if (not (str-eq ?val (nth$ (+ ?questionNumber 1) ?thisAnimalData))) then
          (undefrule (nth$ 1 ?thisAnimalData))
+         (eval (str-cat "(retract-string \"(length" (length$ ?*AnimalData*) ")\")"))
          (bind ?*AnimalData* (delete$ ?*AnimalData* ?i ?i))
+         (eval (str-cat "(assert (length" (length$ ?*AnimalData*) "))"))
+         (-- ?i)
       )
    )
    (assert (attribute (question (nth$ ?questionNumber ?*PossibleQuestions*)) (value ?val)))
@@ -142,6 +146,7 @@
          (createAnimal (split$ ?inputRead ","))
       else
          (printline "Animal Data loaded as rules.")
+         (eval (str-cat "(assert (length" (length$ ?*AnimalData*) "))"))
          (bind ?animalDataLoading FALSE)
       )
    )
@@ -152,36 +157,43 @@
 ** 
 ** Example Rule for the data for cow:
 ** 
-(defrule Cow "The rule that checks to see if the animal is a Cow"
-   (attribute (question ?q1 & "1. Is your animal eaten by humans?") (value ?v1 & 1))
-   (attribute (question ?q2 & "2. Is your animal domesticated?") (value ?v2 & 1))
-   (attribute (question ?q3 & "3. Does your animal have fur?") (value ?v3 & 0))
-   (attribute (question ?q4 & "4. Does your animal have horns?") (value ?v4 & 1))
-   (attribute (question ?q5 & "5. Does your animal have wool?") (value ?v5 & 0))
-   (attribute (question ?q6 & "6. Does your animal have hooves?") (value ?v6 & 1))
-   (attribute (question ?q7 & "7. Is your animal a rodent?") (value ?v7 & 0))
-   (attribute (question ?q8 & "8. Does your animal eat meat?") (value ?v8 & 0))
-   (attribute (question ?q9 & "9. Is your animal aquatic?") (value ?v9 & 0))
-   (attribute (question ?q10 & "10. Can your animal fly? (chained to next question)") (value ?v10 & 0))
-   (attribute (question ?q11 & "11. Does your animal have wings?") (value ?v11 & 0))
-   (attribute (question ?q12 & "12. Is your animal a type of fish?") (value ?v12 & 0))
-   (attribute (question ?q13 & "13. Is your animal a cephalopod?") (value ?v13 & 0))
-   (attribute (question ?q14 & "14. Is your animal a type of lizard?") (value ?v14 & 0))
-   (attribute (question ?q15 & "15. Is your animal a type of crustacean?") (value ?v15 & 0))
-   (attribute (question ?q16 & "16. Does your animal have bones?") (value ?v16 & 1))
-   (attribute (question ?q17 & "17. Does your animal build structures?") (value ?v17 & 0))
-   (attribute (question ?q18 & "18. Does your animal have a tail?") (value ?v18 & 1))
-   (attribute (question ?q19 & "19. Does your animal have legs?") (value ?v19 & 1))
-   (attribute (question ?q20 & "20. Does your animal have fins?") (value ?v20 & 0))
-   (attribute (question ?q21 & "21. Does your animal have a bill?") (value ?v21 & 0))
-   =>
-   (gameOver (ask "Is your animal a Cow?"))
-) ; (defrule Cow "The rule that checks to see if the animal is a Cow")
+(defrule Zebra "The rule that checks to see if the animal is a Zebra"
+   (or (test FALSE) (and 
+   (attribute (question "1. Is your animal eaten by humans?") (value 0))
+      (attribute (question "2. Is your animal domesticated?") (value 0))
+      (attribute (question "3. Does your animal have fur?") (value 1))
+      (attribute (question "4. Does your animal have horns?") (value 0))
+      (attribute (question "5. Does your animal have wool?") (value 0))
+      (attribute (question "6. Does your animal have hooves?") (value 1))
+      (attribute (question "7. Does your animal have more than one color?") (value 1))
+      (attribute (question "8. Does your animal eat meat?") (value 0))
+      (attribute (question "9. Is your animal aquatic?") (value 0))
+      (attribute (question "10. Can your animal fly?") (value 0))
+      (attribute (question "11. Does your animal have wings?") (value 0))
+      (attribute (question "12. Is your animal a type of fish?") (value 0))
+      (attribute (question "13. Is your animal a decapods?") (value 0))
+      (attribute (question "14. Is your animal a type of reptile?") (value 0))
+      (attribute (question "15. Does your animal lay eggs?") (value 0))
+      (attribute (question "16. Does your animal have bones?") (value 1))
+      (attribute (question "17. Does your animal build structures?") (value 0))
+      (attribute (question "18. Does your animal have a tail?") (value 1))
+      (attribute (question "19. Does your animal have legs?") (value 1))
+      (attribute (question "20. Does your animal have fins?") (value 0))
+      (attribute (question "21. Does your animal have a bill or beak?") (value 0))
+      ))
+      =>
+   (bind ?victory TRUE)
+   (if ?victory then
+      (gameOver (ask "Is your animal a Zebra?"))
+   ))
+) ; (defrule Zebra "The rule that checks to see if the animal is a Cow")
 ** 
 ** @param ?data a list with the data 
 */
 (deffunction createAnimal (?data)
    (bind ?toRule (str-cat "(defrule " (nth$ 1 ?data) " \"The rule that checks to see if the animal is a " (nth$ 1 ?data) "\" 
+   (declare (salience 1))
+   (or (" (nth$ 1 ?data) ") (and 
    "))
    (for (bind ?i 2) (<= ?i (length$ ?data)) (++ ?i)
       (bind ?toRule (str-cat ?toRule "(attribute (question \"" 
@@ -190,11 +202,30 @@
       )
    )
    (printline (str-cat "Building the rule for a " (nth$ 1 ?data)))
-   (build (str-cat ?toRule "=>
+
+   (if (str-eq "Cow" (nth$ 1 ?data)) then
+   
+   (printline "***********")
+   (printline (str-cat ?toRule "
+   )
+   )
+   =>
    (bind ?victory TRUE)
    (if ?victory then
       (gameOver (ask \"Is your animal a " (nth$ 1 ?data) "?\"))
    ))"))
+   (printline "***********"))
+
+   (build (str-cat ?toRule "
+   )
+   )
+   =>
+   (bind ?victory TRUE)
+   (if ?victory then
+      (gameOver (ask \"Is your animal a " (nth$ 1 ?data) "?\"))
+   ))"))
+   
+
 ) ; (deffunction createAnimal (?data)
 
 /**
@@ -209,25 +240,38 @@
       (str-cat "(defrule askQuestionNumber" ?questionNumber " \"The rule that will ask the user to resolve the attribute for question id " ?questionNumber ".\"
                   (need-attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\"))
                 =>
-                  (getAutoAssert " ?questionNumber " (requestInfo " ?questionNumber "))
-                  
+                  (requestInfo " ?questionNumber ")
+                  (printline ?*AnimalData*)
                 )"
       )
    )
 )
 
-(deffunction getAutoAssert (?questionNumber ?val)
+/*
+(deffunction autoAssert (?questionNumber ?val)
    (printline (str-cat "Autocompleting database for question number " ?questionNumber))
    (printline (nth$ ?questionNumber ?*PossibleQuestions*))
+   (printline "animal Data:")
+   (printline ?*AnimalData*)
 
-   (for (bind ?i 1) (<= ?i (length$ ?*AnimalData*)) (++ ?i) 
-      (nth$ (+ ?i 1) ?*AnimalData*)
+   (bind ?listOfAllTrue (create$))
+   (bind ?listOfAllFalse (create$))
+   (for (bind ?i 1) (<= ?i (length$ ?*AnimalData*)) (++ ?i)
+      (printline (+ ?i 1))
+      (printline (split$ (nth$ (+ ?i 1) ?*AnimalData*) ","))
+      (if (= 1 (nth$ (+ ?questionNumber 1) (split$ (nth$ (+ ?i 1) ?*AnimalData*) ","))) then
+         (bind ?listOfAllTrue (insert$ ?listOfAllTrue (+ (length$ ?listOfAllTrue) 1) (nth$ ?i ?*AnimalData*)))
+      else
+         (bind ?listOfAllFalse (insert$ ?listOfAllFalse (+ (length$ ?listOfAllFalse) 1) (nth$ ?i ?*AnimalData*)))
+      )
    )
+
+   ;all false
    (return "")
-)
+)*/
 
 (defrule main "The starting point for the game."
-
+      (declare (salience 2))
    =>
 
    (getAnimalData "animalListAndAttributes.csv")
@@ -235,14 +279,23 @@
       (createQuestionRule ?i)
    )
    (printline "Completed the rule creation of question rules.")
+   (facts)
 )
-  
-(defrule end "The ending point of the game."
-      (declare (salience -1))
-   =>
+
+(defrule end "The ending point of the game if the user has lost."
+      (declare (salience 2))
+      (length0)
+
+         =>
       (gameOver "n")
+)
+
+(defrule win "The ending point of the game if the user has won."
+      (declare (salience 2))
+      (length1)
+   =>
+      (eval (str-cat "(assert (" (nth$ 1 (split$ (nth$ 1 ?*AnimalData*) ",")) "))"))
 )
 
 (reset)
 (run)
-(printline ?*AnimalData*)
