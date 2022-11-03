@@ -17,7 +17,7 @@
 
 (defglobal ?*PossibleQuestions* = (create$ 
    "1. Is your animal eaten by humans?"
-   "2. Is your animal domesticated?"
+   "2. Is your animal domesticated or kept as a pet often?"
    "3. Does your animal have fur?"
    "4. Does your animal have horns?"
    "5. Does your animal have wool?"
@@ -84,7 +84,6 @@
 ** @param ?question the question to ask
 */
 (deffunction requestInfo (?questionNumber)
-(facts)
    (retract-string (str-cat "(need-attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\"))"))
    (bind ?response (ask (nth$ ?questionNumber ?*PossibleQuestions*)))
    (bind ?val 2)
@@ -205,7 +204,7 @@
 
    (if (str-eq "Cow" (nth$ 1 ?data)) then
    
-   (printline "***********")
+   (printline "Sample Below: ")
    (printline (str-cat ?toRule "
    )
    )
@@ -240,46 +239,67 @@
       (str-cat "(defrule askQuestionNumber" ?questionNumber " \"The rule that will ask the user to resolve the attribute for question id " ?questionNumber ".\"
                   (need-attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\"))
                 =>
-                  (requestInfo " ?questionNumber ")
-                  (printline ?*AnimalData*)
+                  (autoAssert " ?questionNumber "(requestInfo " ?questionNumber "))
                 )"
       )
    )
+   (printline "****************************")
+   (printline       (str-cat "(defrule askQuestionNumber" ?questionNumber " \"The rule that will ask the user to resolve the attribute for question id " ?questionNumber ".\"
+                  (need-attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\"))
+                =>
+                  (autoAssert " ?questionNumber "(requestInfo " ?questionNumber "))
+                )"
+      ))
+      
+   (printline "****************************")
 )
 
 /*
+** Automatically creates logical conclusions based on the fact space.
+** 
+** @param ?questionNumber the number of the current question
+** @param ?val the result of the question that was asked
+*/
 (deffunction autoAssert (?questionNumber ?val)
-   (printline (str-cat "Autocompleting database for question number " ?questionNumber))
-   (printline (nth$ ?questionNumber ?*PossibleQuestions*))
-   (printline "animal Data:")
-   (printline ?*AnimalData*)
+   ;(printline (str-cat "Autocompleting database for question number " ?questionNumber))
+   ;(printline (nth$ ?questionNumber ?*PossibleQuestions*))
+   ;(printline "animal Data:")
+   ;(printline ?*AnimalData*)
 
-   (bind ?listOfAllTrue (create$))
-   (bind ?listOfAllFalse (create$))
-   (for (bind ?i 1) (<= ?i (length$ ?*AnimalData*)) (++ ?i)
-      (printline (+ ?i 1))
-      (printline (split$ (nth$ (+ ?i 1) ?*AnimalData*) ","))
-      (if (= 1 (nth$ (+ ?questionNumber 1) (split$ (nth$ (+ ?i 1) ?*AnimalData*) ","))) then
-         (bind ?listOfAllTrue (insert$ ?listOfAllTrue (+ (length$ ?listOfAllTrue) 1) (nth$ ?i ?*AnimalData*)))
-      else
-         (bind ?listOfAllFalse (insert$ ?listOfAllFalse (+ (length$ ?listOfAllFalse) 1) (nth$ ?i ?*AnimalData*)))
+   ;(printline (= 5 (length$ ?*AnimalData*)))
+
+   (for (bind ?i (+ 1 ?questionNumber)) (<= ?i (length$ ?*PossibleQuestions*)) (++ ?i)
+      (bind ?firstVal (nth$ ?i (split$ (nth$ 1 ?*AnimalData*) ",")))
+      (bind ?canAdd TRUE)
+      (for (bind ?j 1) (<= ?j (length$ ?*AnimalData*)) (++ ?j)
+         (if (not (= ?firstVal (nth$ (+ ?i 1) (split$ (nth$ ?j ?*AnimalData*) ",")))) then
+            (bind ?canAdd FALSE)
+            ;(printline (str-cat
+            ;"default answer was " ?firstVal " for questoin "  (nth$ ?i ?*PossibleQuestions*)
+            ;" killed by " (nth$ 1 (split$ (nth$ ?j ?*AnimalData*) ",") )))
+            (break)
+         )
+      )
+      (if ?canAdd then
+         ;(printline (str-cat "automatically makes the answer to " (nth$ ?i ?*PossibleQuestions*) " " ?firstVal))
+         (assert (attribute (question (nth$ ?i ?*PossibleQuestions*)) (value ?firstVal)))
       )
    )
-
    ;all false
    (return "")
-)*/
+)
 
 (defrule main "The starting point for the game."
       (declare (salience 2))
    =>
+   (watch facts)
 
    (getAnimalData "animalListAndAttributes.csv")
    (for (bind ?i 1) (<= ?i (length$ ?*PossibleQuestions*)) (++ ?i)
       (createQuestionRule ?i)
    )
+   (watch facts)
    (printline "Completed the rule creation of question rules.")
-   (facts)
 )
 
 (defrule end "The ending point of the game if the user has lost."
