@@ -38,6 +38,9 @@
    "20. Does your animal have fins?"
    "21. Does your animal have a bill or beak?"
    "22. Does it eat fish?"
+   "23. Does it spend any time or hunt in the ocean?"
+   "24. Is it a feline?"
+
 )) ; (defglobal ?*PossibleQuestions* = (create$ 
 
 ;use (split$ ?inputRead ",") to access the data as a 2d array
