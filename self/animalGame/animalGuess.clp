@@ -28,7 +28,7 @@
    "10. Can your animal fly?"
    "11. Does your animal have wings?"
    "12. Is your animal a type of fish?"
-   "13. Is your animal a decapods?"
+   "13. Is your animal a decapod?"
    "14. Is your animal a type of reptile?"
    "15. Does your animal lay eggs?"
    "16. Does your animal have bones?"
@@ -58,7 +58,7 @@
 
 /**
 ** Splits a string by the ?splitter character or phrase. 
-** 
+**
 ** @param ?str the string to split
 ** @param ?splitter the splitting character.
 ** @return the created list
@@ -99,7 +99,9 @@
       (if (not (str-eq ?val (nth$ (+ ?questionNumber 1) ?thisAnimalData))) then
          (undefrule (nth$ 1 ?thisAnimalData))
          (eval (str-cat "(retract-string \"(length" (length$ ?*AnimalData*) ")\")"))
+         (printline (str-cat "Based on your answers I have eliminated " (nth$ 1 (split$ (nth$ ?i ?*AnimalData*) ",")) "."))
          (bind ?*AnimalData* (delete$ ?*AnimalData* ?i ?i))
+         
          (eval (str-cat "(assert (length" (length$ ?*AnimalData*) "))"))
          (-- ?i)
       )
@@ -170,7 +172,7 @@
       (attribute (question "10. Can your animal fly?") (value 0))
       (attribute (question "11. Does your animal have wings?") (value 0))
       (attribute (question "12. Is your animal a type of fish?") (value 0))
-      (attribute (question "13. Is your animal a decapods?") (value 0))
+      (attribute (question "13. Is your animal a decapod?") (value 0))
       (attribute (question "14. Is your animal a type of reptile?") (value 0))
       (attribute (question "15. Does your animal lay eggs?") (value 0))
       (attribute (question "16. Does your animal have bones?") (value 1))
@@ -237,21 +239,13 @@
    (printline (str-cat "Building rule for the question " (nth$ (- ?questionNumber) ?*PossibleQuestions*) "."))
    (build 
       (str-cat "(defrule askQuestionNumber" ?questionNumber " \"The rule that will ask the user to resolve the attribute for question id " ?questionNumber ".\"
-                  (need-attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\"))
+                  ;(need-attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\"))
+                  (not (attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\")))
                 =>
                   (autoAssert " ?questionNumber "(requestInfo " ?questionNumber "))
                 )"
       )
    )
-   (printline "****************************")
-   (printline       (str-cat "(defrule askQuestionNumber" ?questionNumber " \"The rule that will ask the user to resolve the attribute for question id " ?questionNumber ".\"
-                  (need-attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\"))
-                =>
-                  (autoAssert " ?questionNumber "(requestInfo " ?questionNumber "))
-                )"
-      ))
-      
-   (printline "****************************")
 )
 
 /*
@@ -261,53 +255,48 @@
 ** @param ?val the result of the question that was asked
 */
 (deffunction autoAssert (?questionNumber ?val)
-   ;(printline (str-cat "Autocompleting database for question number " ?questionNumber))
-   ;(printline (nth$ ?questionNumber ?*PossibleQuestions*))
-   ;(printline "animal Data:")
-   ;(printline ?*AnimalData*)
-
-   ;(printline (= 5 (length$ ?*AnimalData*)))
-
-   (for (bind ?i (+ 1 ?questionNumber)) (<= ?i (length$ ?*PossibleQuestions*)) (++ ?i)
-      (bind ?firstVal (nth$ ?i (split$ (nth$ 1 ?*AnimalData*) ",")))
+   (for (bind ?i 2) (<= ?i (length$ ?*PossibleQuestions*)) (++ ?i)
+      (bind ?firstVal (nth$ (+ ?i 1) (split$ (nth$ 1 ?*AnimalData*) ",")))
       (bind ?canAdd TRUE)
       (for (bind ?j 1) (<= ?j (length$ ?*AnimalData*)) (++ ?j)
          (if (not (= ?firstVal (nth$ (+ ?i 1) (split$ (nth$ ?j ?*AnimalData*) ",")))) then
             (bind ?canAdd FALSE)
-            ;(printline (str-cat
-            ;"default answer was " ?firstVal " for questoin "  (nth$ ?i ?*PossibleQuestions*)
-            ;" killed by " (nth$ 1 (split$ (nth$ ?j ?*AnimalData*) ",") )))
             (break)
          )
       )
       (if ?canAdd then
-         ;(printline (str-cat "automatically makes the answer to " (nth$ ?i ?*PossibleQuestions*) " " ?firstVal))
          (assert (attribute (question (nth$ ?i ?*PossibleQuestions*)) (value ?firstVal)))
       )
    )
-   ;all false
    (return "")
 )
 
 (defrule main "The starting point for the game."
       (declare (salience 2))
    =>
-   (watch facts)
-
    (getAnimalData "animalListAndAttributes.csv")
    (for (bind ?i 1) (<= ?i (length$ ?*PossibleQuestions*)) (++ ?i)
       (createQuestionRule ?i)
    )
-   (watch facts)
    (printline "Completed the rule creation of question rules.")
 )
 
 (defrule end "The ending point of the game if the user has lost."
       (declare (salience 2))
       (length0)
-
          =>
       (gameOver "n")
+)
+
+(defrule end "The ending point of the game if there is an error."
+      (declare (salience -9))
+         =>
+      (printline "error!")
+      (printline (str-cat "Animal Data: 
+      " ?*AnimalData*))
+      (facts)
+      (rules)
+
 )
 
 (defrule win "The ending point of the game if the user has won."
@@ -316,6 +305,7 @@
    =>
       (eval (str-cat "(assert (" (nth$ 1 (split$ (nth$ 1 ?*AnimalData*) ",")) "))"))
 )
+
 
 (reset)
 (run)
