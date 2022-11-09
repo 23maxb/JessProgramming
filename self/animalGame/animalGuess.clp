@@ -98,19 +98,22 @@
          (bind ?val 0)
       )
    )
-   (for (bind ?i 1) (<= ?i (length$ ?*AnimalData*)) (++ ?i) 
-      (bind ?thisAnimalData (split$ (nth$ ?i ?*AnimalData*) ","))
-      (if (not (str-eq ?val (nth$ (+ ?questionNumber 1) ?thisAnimalData))) then
-         (undefrule (nth$ 1 ?thisAnimalData))
-         (eval (str-cat "(retract-string \"(length" (length$ ?*AnimalData*) ")\")"))
-         (printline (str-cat "Based on your answers I have eliminated " (nth$ 1 (split$ (nth$ ?i ?*AnimalData*) ",")) "."))
-         (bind ?*AnimalData* (delete$ ?*AnimalData* ?i ?i))
-         
-         (eval (str-cat "(assert (length" (length$ ?*AnimalData*) "))"))
-         (-- ?i)
+   (if (= ?val 2) then
+      (eval (str-cat "(undefrule askQuestionNumber" ?questionNumber ")"))
+   else
+      (for (bind ?i 1) (<= ?i (length$ ?*AnimalData*)) (++ ?i)
+         (bind ?thisAnimalData (split$ (nth$ ?i ?*AnimalData*) ","))
+         (if (not (str-eq ?val (nth$ (+ ?questionNumber 1) ?thisAnimalData))) then
+            (undefrule (nth$ 1 ?thisAnimalData))
+            (eval (str-cat "(retract-string \"(length" (length$ ?*AnimalData*) ")\")"))
+            (printline (str-cat "Based on your answers I have eliminated " (nth$ 1 (split$ (nth$ ?i ?*AnimalData*) ",")) "."))
+            (bind ?*AnimalData* (delete$ ?*AnimalData* ?i ?i))
+            (eval (str-cat "(assert (length" (length$ ?*AnimalData*) "))"))
+            (-- ?i)
+         )
       )
+      (assert (attribute (question (nth$ ?questionNumber ?*PossibleQuestions*)) (value ?val)))
    )
-   (assert (attribute (question (nth$ ?questionNumber ?*PossibleQuestions*)) (value ?val)))
    (return (= ?val 1))
 ); (deffunction requestInfo (?question)
 
@@ -295,12 +298,11 @@
 (defrule end "The ending point of the game if there is an error."
       (declare (salience -9))
          =>
-      (printline "error!")
+         (bind ?toPrint "I know your animal is either a ")
+         ()
+         
       (printline (str-cat "Animal Data: 
       " ?*AnimalData*))
-      (facts)
-      (rules)
-
 )
 
 (defrule win "The ending point of the game if the user has won."
