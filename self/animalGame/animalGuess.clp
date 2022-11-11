@@ -4,16 +4,16 @@
 * To run this file within the jess terminal run (batch "executable\\self\\animalGame\\animalGuess.clp")
 *
 * @author Max Blennemann
-* @version 10/6/22
+* @version 11/11/22
 */
 
 (deftemplate attribute (slot question) (slot value))
 (do-backward-chaining attribute)
 ;value is integer
-;-1 is not set
+;-1 is not set (not used)
 ; 0 is no
 ; 1 is yes
-; 2 is unknown
+; 2 is unknown (not used)
 
 (defglobal ?*PossibleQuestions* = (create$ 
    "1. Is your animal eaten by humans?"
@@ -296,13 +296,17 @@
 )
 
 (defrule end "The ending point of the game if there is an error."
-      (declare (salience -9))
-         =>
+         (declare (salience -9))
+      =>
          (bind ?toPrint "I know your animal is either a ")
-         ()
-         
-      (printline (str-cat "Animal Data: 
-      " ?*AnimalData*))
+         (for (bind ?i 1) (<= ?i (length$ ?*AnimalData*)) (++ ?i)
+            (bind ?toPrint (str-cat ?toPrint (nth$ 1 (split$ (nth$ ?i ?*AnimalData*) ",")) ", "))
+         )
+         (bind ?toPrint (str-cat (sub-string 1 (- (str-length ?toPrint) 2) ?toPrint) "."))
+         (printline (str-cat ?toPrint " I'm just going to guess a random one."))
+         (bind ?tester (str-cat "(assert (" (nth$ 1 (split$ (nth$ (mod (random) (length$ ?*AnimalData*)) ?*AnimalData*) ",")) "))"))
+         (printline ?tester)
+         (eval ?tester)
 )
 
 (defrule win "The ending point of the game if the user has won."
@@ -311,7 +315,6 @@
    =>
       (eval (str-cat "(assert (" (nth$ 1 (split$ (nth$ 1 ?*AnimalData*) ",")) "))"))
 )
-
 
 (reset)
 (run)

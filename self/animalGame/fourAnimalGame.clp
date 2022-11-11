@@ -15,6 +15,7 @@
 
 ;Defines the template for any information about the animal
 (deftemplate attribute (slot name) (slot value))
+(do-backward-chaining attribute)
 
 (defrule cow
    "selects for a cow"
@@ -67,6 +68,7 @@
 (defrule getAquatic
    "gets whether the animal is aquatic"
    (test (= ?*finished* FALSE))
+   (need-attribute (name "aquatic"))
    (not (attribute (name "aquatic")))
    =>
    (printout t "Is your animal aquatic?")
