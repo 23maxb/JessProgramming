@@ -22,7 +22,7 @@
    "4. Does your animal have horns?"
    "5. Does your animal have wool?"
    "6. Does your animal have hooves?"
-   "7. Does your animal have more than one color?"
+   "7. Does any species of your animal have more than one color?"
    "8. Does your animal eat meat?"
    "9. Is your animal aquatic?"
    "10. Can your animal fly?"
@@ -40,7 +40,6 @@
    "22. Does it eat fish?"
    "23. Does it spend any time or hunt in the ocean?"
    "24. Is it a feline?"
-
 )) ; (defglobal ?*PossibleQuestions* = (create$ 
 
 ;use (split$ ?inputRead ",") to access the data as a 2d array
@@ -222,26 +221,28 @@
    (printline (str-cat "Building the rule for a " (nth$ 1 ?data)))
 
    (if (str-eq "Cow" (nth$ 1 ?data)) then
-   
-   (printline "Sample Below: ")
-   (printline (str-cat ?toRule "
+      (printline "Sample Below: ")
+      (printline (str-cat ?toRule "
+      )
+      )
+      =>
+      (bind ?victory TRUE)
+      (if ?victory then
+         (gameOver (ask \"Is your animal a " (nth$ 1 ?data) "?\"))
+      ))"))
+      (printline "***********")
    )
-   )
-   =>
-   (bind ?victory TRUE)
-   (if ?victory then
-      (gameOver (ask \"Is your animal a " (nth$ 1 ?data) "?\"))
-   ))"))
-   (printline "***********"))
 
-   (build (str-cat ?toRule "
+   (build 
+      (str-cat ?toRule "
+      )
+      )
+      =>
+      (bind ?victory TRUE)
+      (if ?victory then
+         (gameOver (ask \"Is your animal a " (nth$ 1 ?data) "?\"))
+      ))")
    )
-   )
-   =>
-   (bind ?victory TRUE)
-   (if ?victory then
-      (gameOver (ask \"Is your animal a " (nth$ 1 ?data) "?\"))
-   ))"))
    
 
 ) ; (deffunction createAnimal (?data)
@@ -289,8 +290,8 @@
 )
 
 (defrule main "The starting point for the game."
-      (declare (salience 2))
-   =>
+   (declare (salience 2))
+=>
    (getAnimalData "animalListAndAttributes.csv")
    (for (bind ?i 1) (<= ?i (length$ ?*PossibleQuestions*)) (++ ?i)
       (createQuestionRule ?i)
@@ -298,36 +299,36 @@
    (printline "Completed the rule creation of question rules.")
    (printline "Welcome to the animal game!")
    (printline "Choose an animal from the above list and then I'll try to guess which one you are thinking of.")
-   (printline "If you are unsure about the answer you can input idk.")
+   (printline "If you are unsure about the answer you can input \"idk\" or any other string that doesnt start with y or n.")
 )
 
 (defrule end "The ending point of the game if the user has lost."
-      (declare (salience 2))
-      (length0)
-         =>
-      (gameOver "n")
+   (declare (salience 2))
+   (length0)
+=>
+   (gameOver "n")
 )
 
 (defrule end "The ending point of the game if there is an error."
-         (declare (salience -9))
-      =>
-         (bind ?toPrint "I know your animal is either a ")
-         (for (bind ?i 1) (<= ?i (length$ ?*AnimalData*)) (++ ?i)
-            (bind ?toPrint (str-cat ?toPrint (nth$ 1 (split$ (nth$ ?i ?*AnimalData*) ",")) ", "))
-            (if (= ?i (- (length$ ?*AnimalData*) 1)) then
-               (bind ?toPrint (str-cat ?toPrint "or "))
-            )
-         )
-         (bind ?toPrint (str-cat (sub-string 1 (- (str-length ?toPrint) 2) ?toPrint) "."))
-         (printline (str-cat ?toPrint " I'm just going to guess a random one."))
-         (eval (str-cat "(assert (" (nth$ 1 (split$ (nth$ (+ (mod (random) (length$ ?*AnimalData*)) 1) ?*AnimalData*) ",")) "))"))
+   (declare (salience -9))
+=>
+   (bind ?toPrint "I know your animal is either a ")
+   (for (bind ?i 1) (<= ?i (length$ ?*AnimalData*)) (++ ?i)
+      (bind ?toPrint (str-cat ?toPrint (nth$ 1 (split$ (nth$ ?i ?*AnimalData*) ",")) ", "))
+      (if (= ?i (- (length$ ?*AnimalData*) 1)) then
+         (bind ?toPrint (str-cat ?toPrint "or "))
+      )
+   )
+   (bind ?toPrint (str-cat (sub-string 1 (- (str-length ?toPrint) 2) ?toPrint) "."))
+   (printline (str-cat ?toPrint " I'm just going to guess a random one."))
+   (eval (str-cat "(assert (" (nth$ 1 (split$ (nth$ (+ (mod (random) (length$ ?*AnimalData*)) 1) ?*AnimalData*) ",")) "))"))
 )
 
 (defrule win "The ending point of the game if the user has won."
-      (declare (salience 2))
-      (length1)
-   =>
-      (eval (str-cat "(assert (" (nth$ 1 (split$ (nth$ 1 ?*AnimalData*) ",")) "))"))
+   (declare (salience 2))
+   (length1)
+=>
+   (eval (str-cat "(assert (" (nth$ 1 (split$ (nth$ 1 ?*AnimalData*) ",")) "))"))
 )
 
 (reset)
