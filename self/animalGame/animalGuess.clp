@@ -106,7 +106,7 @@
          (if (not (str-eq ?val (nth$ (+ ?questionNumber 1) ?thisAnimalData))) then
             (undefrule (nth$ 1 ?thisAnimalData))
             (eval (str-cat "(retract-string \"(length" (length$ ?*AnimalData*) ")\")"))
-            (printline (str-cat "Based on your answers I have eliminated " (nth$ 1 (split$ (nth$ ?i ?*AnimalData*) ",")) "."))
+            ;(printline (str-cat "Based on your answers I have eliminated " (nth$ 1 (split$ (nth$ ?i ?*AnimalData*) ",")) "."))
             (bind ?*AnimalData* (delete$ ?*AnimalData* ?i ?i))
             (eval (str-cat "(assert (length" (length$ ?*AnimalData*) "))"))
             (-- ?i)
@@ -124,6 +124,7 @@
 */
 (deffunction gameOver (?win)
    (bind ?win (lowcase ?win))
+   (bind ?val nil)
    (if (= (asc (sub-string 1 1 ?win)) (asc "y")) then
       (bind ?val TRUE)
     else 
@@ -131,10 +132,14 @@
          (bind ?val FALSE)
       )
    )
-   (if ?val then
-      (printline "I won! :)")
-    else
-      (printline "I lost. :(")
+   (if (= ?val nil) then
+      (printline "Bruh")
+   else
+      (if ?val then
+         (printline "I won! :)")
+      else
+         (printline "I lost. :(")
+      )
    )
    (halt)
 ); (deffunction gameOver (?win)
@@ -165,12 +170,13 @@
 ** 
 ** Example Rule for the data for cow:
 ** 
-(defrule Zebra "The rule that checks to see if the animal is a Zebra"
-   (or (test FALSE) (and 
-   (attribute (question "1. Is your animal eaten by humans?") (value 0))
-      (attribute (question "2. Is your animal domesticated?") (value 0))
-      (attribute (question "3. Does your animal have fur?") (value 1))
-      (attribute (question "4. Does your animal have horns?") (value 0))
+(defrule Cow "The rule that checks to see if the animal is a Cow"
+   (declare (salience 1))
+   (or (Cow) (and
+   (attribute (question "1. Is your animal eaten by humans?") (value 1))
+      (attribute (question "2. Is your animal domesticated or kept as a pet often?") (value 1))
+      (attribute (question "3. Does your animal have fur?") (value 0))
+      (attribute (question "4. Does your animal have horns?") (value 1))
       (attribute (question "5. Does your animal have wool?") (value 0))
       (attribute (question "6. Does your animal have hooves?") (value 1))
       (attribute (question "7. Does your animal have more than one color?") (value 1))
@@ -188,13 +194,17 @@
       (attribute (question "19. Does your animal have legs?") (value 1))
       (attribute (question "20. Does your animal have fins?") (value 0))
       (attribute (question "21. Does your animal have a bill or beak?") (value 0))
-      ))
-      =>
+      (attribute (question "22. Does it eat fish?") (value 0))
+      (attribute (question "23. Does it spend any time or hunt in the ocean?") (value 0))
+      (attribute (question "24. Is it a feline?") (value 0))
+   )
+   )
+   =>
    (bind ?victory TRUE)
    (if ?victory then
-      (gameOver (ask "Is your animal a Zebra?"))
-   ))
-) ; (defrule Zebra "The rule that checks to see if the animal is a Cow")
+      (gameOver (ask "Is your animal a Cow?"))
+   )
+)
 ** 
 ** @param ?data a list with the data 
 */
@@ -243,7 +253,7 @@
 ** @param ?questionNumber the question number to ask
 **/
 (deffunction createQuestionRule (?questionNumber)
-   (printline (str-cat "Building rule for the question " (nth$ (- ?questionNumber) ?*PossibleQuestions*) "."))
+   ;(printline (str-cat "Building rule for the question " (nth$ (- ?questionNumber) ?*PossibleQuestions*) "."))
    (build 
       (str-cat "(defrule askQuestionNumber" ?questionNumber " \"The rule that will ask the user to resolve the attribute for question id " ?questionNumber ".\"
                   ;(need-attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\"))
@@ -286,6 +296,9 @@
       (createQuestionRule ?i)
    )
    (printline "Completed the rule creation of question rules.")
+   (printline "Welcome to the animal game!")
+   (printline "Choose an animal from the above list and then I'll try to guess which one you are thinking of.")
+   (printline "If you are unsure about the answer you can input idk.")
 )
 
 (defrule end "The ending point of the game if the user has lost."
@@ -301,12 +314,13 @@
          (bind ?toPrint "I know your animal is either a ")
          (for (bind ?i 1) (<= ?i (length$ ?*AnimalData*)) (++ ?i)
             (bind ?toPrint (str-cat ?toPrint (nth$ 1 (split$ (nth$ ?i ?*AnimalData*) ",")) ", "))
+            (if (= ?i (- (length$ ?*AnimalData*) 1)) then
+               (bind ?toPrint (str-cat ?toPrint "or "))
+            )
          )
          (bind ?toPrint (str-cat (sub-string 1 (- (str-length ?toPrint) 2) ?toPrint) "."))
          (printline (str-cat ?toPrint " I'm just going to guess a random one."))
-         (bind ?tester (str-cat "(assert (" (nth$ 1 (split$ (nth$ (mod (random) (length$ ?*AnimalData*)) ?*AnimalData*) ",")) "))"))
-         (printline ?tester)
-         (eval ?tester)
+         (eval (str-cat "(assert (" (nth$ 1 (split$ (nth$ (+ (mod (random) (length$ ?*AnimalData*)) 1) ?*AnimalData*) ",")) "))"))
 )
 
 (defrule win "The ending point of the game if the user has won."
