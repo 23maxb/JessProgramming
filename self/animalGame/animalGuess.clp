@@ -1,10 +1,12 @@
 /**
 * Plays an animal game with the user.
+* Possible animal results are listed in animalListAndAttributes.csv.
 * Requires Dr. Nelson's utilities_v4.clp to be batched in before. (batch "executable\\utilities_v4.clp")
 * To run this file within the jess terminal run (batch "executable\\self\\animalGame\\animalGuess.clp")
+* Alternatively, call runfile.bat in any terminal (windows only).
 *
 * @author Max Blennemann
-* @version 11/11/22
+* @version 11/17/22
 */
 
 (deftemplate attribute (slot question) (slot value))
@@ -92,7 +94,7 @@
    (bind ?val 2)
    (if (= (asc (sub-string 1 1 ?response)) (asc "y")) then
       (bind ?val 1)
-      else 
+   else 
       (if (= (asc (sub-string 1 1 ?response)) (asc "n")) then
          (bind ?val 0)
       )
@@ -110,9 +112,9 @@
             (eval (str-cat "(assert (length" (length$ ?*AnimalData*) "))"))
             (-- ?i)
          )
-      )
+      ) ; (for (bind ?i 1) (<= ?i (length$ ?*AnimalData*)) (++ ?i)
       (assert (attribute (question (nth$ ?questionNumber ?*PossibleQuestions*)) (value ?val)))
-   )
+   ) ; (if (= ?val 2) then
    (return (= ?val 1))
 ); (deffunction requestInfo (?question)
 
@@ -132,7 +134,7 @@
       )
    )
    (if (= ?val nil) then
-      (printline "Bruh")
+      (printline "I won probably? :|")
    else
       (if ?val then
          (printline "I won! :)")
@@ -161,7 +163,7 @@
          (eval (str-cat "(assert (length" (length$ ?*AnimalData*) "))"))
          (bind ?animalDataLoading FALSE)
       )
-   )
+   ) ; (while ?animalDataLoading
 ) ; (deffunction getAnimalData (?fileName)
 
 /**
@@ -218,8 +220,9 @@
       ")
       )
    )
-   (printline (str-cat "Building the rule for a " (nth$ 1 ?data)))
+   ;(printline (str-cat "Building the rule for a " (nth$ 1 ?data)))
 
+   /*
    (if (str-eq "Cow" (nth$ 1 ?data)) then
       (printline "Sample Below: ")
       (printline (str-cat ?toRule "
@@ -232,6 +235,7 @@
       ))"))
       (printline "***********")
    )
+   */
 
    (build 
       (str-cat ?toRule "
@@ -249,7 +253,13 @@
 
 /**
 ** Builds all the rules needed for asking the questions about the game.
-** 
+** Sample below:
+(defrule askQuestionNumber21 "The rule that will ask the user to resolve the attribute for question id 21."
+   ;(need-attribute (question "21. Does your animal have a bill or beak?"))
+   (not (attribute (question "21. Does your animal have a bill or beak?")))
+=>
+   (autoAssert 21(requestInfo 21))
+)
 ** 
 ** @param ?questionNumber the question number to ask
 **/
@@ -298,7 +308,7 @@
    )
    (printline "Completed the rule creation of question rules.")
    (printline "Welcome to the animal game!")
-   (printline "Choose an animal from the above list and then I'll try to guess which one you are thinking of.")
+   (printline "Choose an animal and then I'll try to guess which one you are thinking of.")
    (printline "If you are unsure about the answer you can input \"idk\" or any other string that doesnt start with y or n.")
 )
 
@@ -309,7 +319,7 @@
    (gameOver "n")
 )
 
-(defrule end "The ending point of the game if there is an error."
+(defrule end "The ending point of the game if there are multiple possible animal results."
    (declare (salience -9))
 =>
    (bind ?toPrint "I know your animal is either a ")
@@ -324,7 +334,7 @@
    (eval (str-cat "(assert (" (nth$ 1 (split$ (nth$ (+ (mod (random) (length$ ?*AnimalData*)) 1) ?*AnimalData*) ",")) "))"))
 )
 
-(defrule win "The ending point of the game if the user has won."
+(defrule win "The ending point of the game if there is only 1 remaining possible animal. Thus, the program is certain of the answer."
    (declare (salience 2))
    (length1)
 =>
