@@ -7,6 +7,7 @@
 *
 * @author Max Blennemann
 * @version 11/17/22
+* @version 1.0
 */
 
 (deftemplate attribute (slot question) (slot value))
@@ -18,8 +19,8 @@
 ; 2 is unknown (not used)
 
 (defglobal ?*PossibleQuestions* = (create$ 
-   "1. Is your animal eaten by humans?"
-   "2. Is your animal domesticated or kept as a pet often?"
+   "1. Is your animal commonly eaten by humans?"
+   "2. Is your animal domesticated or kept as a pet often?" 
    "3. Does your animal have fur?"
    "4. Does your animal have horns?"
    "5. Does your animal have wool?"
@@ -91,13 +92,20 @@
 (deffunction requestInfo (?questionNumber)
    (retract-string (str-cat "(need-attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\"))"))
    (bind ?response (ask (nth$ ?questionNumber ?*PossibleQuestions*)))
-   (bind ?val 2)
+   (bind ?val 3)
    (if (= (asc (sub-string 1 1 ?response)) (asc "y")) then
       (bind ?val 1)
    else 
       (if (= (asc (sub-string 1 1 ?response)) (asc "n")) then
          (bind ?val 0)
+      else
+         (if (= (asc (sub-string 1 1 ?response)) (asc "i")) then
+            (bind ?val 2)
+         )
       )
+   )
+   (if (= ?val 3) then
+      (return (requestInfo ?questionNumber))
    )
    (if (= ?val 2) then
       (eval (str-cat "(undefrule askQuestionNumber" ?questionNumber ")"))
@@ -281,6 +289,7 @@
 ** 
 ** @param ?questionNumber the number of the current question
 ** @param ?val the result of the question that was asked
+** @return an empty string
 */
 (deffunction autoAssert (?questionNumber ?val)
    (for (bind ?i 2) (<= ?i (length$ ?*PossibleQuestions*)) (++ ?i)
@@ -309,7 +318,7 @@
    (printline "Completed the rule creation of question rules.")
    (printline "Welcome to the animal game!")
    (printline "Choose an animal and then I'll try to guess which one you are thinking of.")
-   (printline "If you are unsure about the answer you can input \"idk\" or any other string that doesnt start with y or n.")
+   (printline "If you are unsure about the answer you can input \"idk.\"")
 )
 
 (defrule end "The ending point of the game if the user has lost."
