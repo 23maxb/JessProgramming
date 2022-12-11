@@ -1,13 +1,13 @@
 /**
-* Plays an animal game with the user.
-* Possible animal results are listed in animalListAndAttributes.csv.
-* Requires Dr. Nelson's utilities_v4.clp to be batched in before. (batch "executable\\utilities_v4.clp")
-* To run this file within the jess terminal run (batch "executable\\self\\animalGame\\animalGuess.clp")
-* Alternatively, call runfile.bat in any terminal (windows only).
-*
-* @author Max Blennemann
-* @version 11/17/22
-* @version 1.0
+** Plays an animal game with the user.
+** Possible animal results are listed in animalListAndAttributes.csv.
+** Requires Dr. Nelson's utilities_v4.clp to be batched in before. (batch "executable\\utilities_v4.clp")
+** To run this file within the jess terminal run (batch "executable\\self\\animalGame\\animalGuess.clp")
+** Alternatively, call runfile.bat in any terminal (windows only).
+**
+** @author Max Blennemann
+** @version 12/8/22
+** @version 1.1
 */
 
 (deftemplate attribute (slot question) (slot value))
@@ -57,6 +57,7 @@
 ** 
 ** @param ?str1 the first String to compare
 ** @param ?str2 the second String to compare 
+** @return true if they are the same otherwise false
 */
 (deffunction str-eq (?str1 ?str2)
    (return (= (str-compare (str-cat ?str1) (str-cat ?str2)) 0))
@@ -88,6 +89,7 @@
 ** Asks the user a question and records the answer in the fact base.
 ** 
 ** @param ?question the question to ask
+** @return true if the given response is yes otherwise false
 */
 (deffunction requestInfo (?questionNumber)
    (retract-string (str-cat "(need-attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\"))"))
@@ -103,15 +105,19 @@
             (bind ?val 2)
          )
       )
-   )
+   ); (if (= (asc (sub-string 1 1 ?response)) (asc "y")) then
+
+   ;catches errors below if there are problems with the input and just repeats question
    (if (= ?val 3) then
       (return (requestInfo ?questionNumber))
    )
+
    (if (= ?val 2) then
       (eval (str-cat "(undefrule askQuestionNumber" ?questionNumber ")"))
    else
       (for (bind ?i 1) (<= ?i (length$ ?*AnimalData*)) (++ ?i)
          (bind ?thisAnimalData (split$ (nth$ ?i ?*AnimalData*) ","))
+
          (if (not (str-eq ?val (nth$ (+ ?questionNumber 1) ?thisAnimalData))) then
             (undefrule (nth$ 1 ?thisAnimalData))
             (eval (str-cat "(retract-string \"(length" (length$ ?*AnimalData*) ")\")"))
@@ -120,9 +126,11 @@
             (eval (str-cat "(assert (length" (length$ ?*AnimalData*) "))"))
             (-- ?i)
          )
+
       ) ; (for (bind ?i 1) (<= ?i (length$ ?*AnimalData*)) (++ ?i)
       (assert (attribute (question (nth$ ?questionNumber ?*PossibleQuestions*)) (value ?val)))
    ) ; (if (= ?val 2) then
+
    (return (= ?val 1))
 ); (deffunction requestInfo (?question)
 
@@ -141,6 +149,7 @@
          (bind ?val FALSE)
       )
    )
+
    (if (= ?val nil) then
       (printline "I won probably? :|")
    else
@@ -150,7 +159,9 @@
          (printline "I lost. :(")
       )
    )
+   
    (halt)
+   (return)
 ); (deffunction gameOver (?win)
 
 /**
@@ -172,6 +183,7 @@
          (bind ?animalDataLoading FALSE)
       )
    ) ; (while ?animalDataLoading
+   (return)
 ) ; (deffunction getAnimalData (?fileName)
 
 /**
@@ -218,7 +230,8 @@
 ** @param ?data a list with the data 
 */
 (deffunction createAnimal (?data)
-   (bind ?toRule (str-cat "(defrule " (nth$ 1 ?data) " \"The rule that checks to see if the animal is a " (nth$ 1 ?data) "\" 
+   (bind ?toRule (str-cat "(defrule " (nth$ 1 ?data) " \"The rule that checks to see if the animal is a " 
+   (nth$ 1 ?data) "\" 
    (declare (salience 1))
    (or (" (nth$ 1 ?data) ") (and 
    "))
@@ -255,15 +268,14 @@
          (gameOver (ask \"Is your animal a " (nth$ 1 ?data) "?\"))
       ))")
    )
-   
-
+   (return)
 ) ; (deffunction createAnimal (?data)
 
 /**
 ** Builds all the rules needed for asking the questions about the game.
 ** Sample below:
 (defrule askQuestionNumber21 "The rule that will ask the user to resolve the attribute for question id 21."
-   ;(need-attribute (question "21. Does your animal have a bill or beak?"))
+   (need-attribute (question "21. Does your animal have a bill or beak?"))
    (not (attribute (question "21. Does your animal have a bill or beak?")))
 =>
    (autoAssert 21(requestInfo 21))
@@ -274,7 +286,8 @@
 (deffunction createQuestionRule (?questionNumber)
    ;(printline (str-cat "Building rule for the question " (nth$ (- ?questionNumber) ?*PossibleQuestions*) "."))
    (build 
-      (str-cat "(defrule askQuestionNumber" ?questionNumber " \"The rule that will ask the user to resolve the attribute for question id " ?questionNumber ".\"
+      (str-cat "(defrule askQuestionNumber" ?questionNumber 
+               " \"The rule that will ask the user to resolve the attribute for question id " ?questionNumber ".\"
                   ;(need-attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\"))
                   (not (attribute (question \"" (nth$ ?questionNumber ?*PossibleQuestions*) "\")))
                 =>
@@ -282,6 +295,7 @@
                 )"
       )
    )
+   (return)
 )
 
 /*
@@ -289,7 +303,6 @@
 ** 
 ** @param ?questionNumber the number of the current question
 ** @param ?val the result of the question that was asked
-** @return an empty string
 */
 (deffunction autoAssert (?questionNumber ?val)
    (for (bind ?i 2) (<= ?i (length$ ?*PossibleQuestions*)) (++ ?i)
@@ -298,14 +311,14 @@
       (for (bind ?j 1) (<= ?j (length$ ?*AnimalData*)) (++ ?j)
          (if (not (= ?firstVal (nth$ (+ ?i 1) (split$ (nth$ ?j ?*AnimalData*) ",")))) then
             (bind ?canAdd FALSE)
-            (break)
+            (bind ?j (+ (length$ ?*AnimalData*) 1))
          )
       )
       (if ?canAdd then
          (assert (attribute (question (nth$ ?i ?*PossibleQuestions*)) (value ?firstVal)))
       )
    )
-   (return "")
+   (return)
 )
 
 (defrule main "The starting point for the game."
@@ -318,7 +331,8 @@
    (printline "Completed the rule creation of question rules.")
    (printline "Welcome to the animal game!")
    (printline "Choose an animal and then I'll try to guess which one you are thinking of.")
-   (printline "If you are unsure about the answer you can input \"idk.\"")
+   (printline "If you are unsure about the answer you can input \"idk.\" Otherwise enter y(es) or n(o).")
+   (printline "Hint: if you want to see all the possible animals just answer unknown to everything.")
 )
 
 (defrule end "The ending point of the game if the user has lost."
@@ -332,14 +346,18 @@
    (declare (salience -9))
 =>
    (bind ?toPrint "I know your animal is either a ")
+
    (for (bind ?i 1) (<= ?i (length$ ?*AnimalData*)) (++ ?i)
       (bind ?toPrint (str-cat ?toPrint (nth$ 1 (split$ (nth$ ?i ?*AnimalData*) ",")) ", "))
       (if (= ?i (- (length$ ?*AnimalData*) 1)) then
          (bind ?toPrint (str-cat ?toPrint "or "))
       )
    )
+
    (bind ?toPrint (str-cat (sub-string 1 (- (str-length ?toPrint) 2) ?toPrint) "."))
    (printline (str-cat ?toPrint " I'm just going to guess a random one."))
+
+   ;the following line of code will just randomly choose an animal from the list of animals
    (eval (str-cat "(assert (" (nth$ 1 (split$ (nth$ (+ (mod (random) (length$ ?*AnimalData*)) 1) ?*AnimalData*) ",")) "))"))
 )
 
