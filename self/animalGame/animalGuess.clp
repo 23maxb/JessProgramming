@@ -1,6 +1,12 @@
 /**
 ** Plays an animal game with the user.
 ** Possible animal results are listed in animalListAndAttributes.csv.
+** This animal game was built around using as many dynamically created rules to streamline this file. 
+** All the data for the animals is stored in a csv file named animalListAndAttributes.csv which must be 
+** located in the same folder as the jess directory. 
+** To add new animals just answer each of the questions listed in ?*PossibleQuestions* in the csv file, using 1
+** to denote yes and 0 to denote no. 
+** 
 ** Requires Dr. Nelson's utilities_v4.clp to be batched in before. (batch "executable\\utilities_v4.clp")
 ** To run this file within the jess terminal run (batch "executable\\self\\animalGame\\animalGuess.clp")
 ** Alternatively, call runfile.bat in any terminal (windows only).
@@ -18,6 +24,12 @@
 ; 1 is yes
 ; 2 is unknown (not used)
 
+/**
+** This is the possible question bank
+** DO NOT CHANGE THE ORDER OF THE QUESTIONS.
+** But if you do change the order, reorder the answers in the csv file accordingly.
+** If you want to add a question just append it to the end.
+*/
 (defglobal ?*PossibleQuestions* = (create$ 
    "1. Is your animal commonly eaten by humans?"
    "2. Is your animal domesticated or kept as a pet often?" 
@@ -121,7 +133,7 @@
          (if (not (str-eq ?val (nth$ (+ ?questionNumber 1) ?thisAnimalData))) then
             (undefrule (nth$ 1 ?thisAnimalData))
             (eval (str-cat "(retract-string \"(length" (length$ ?*AnimalData*) ")\")"))
-            ;(printline (str-cat "Based on your answers I have eliminated " (nth$ 1 (split$ (nth$ ?i ?*AnimalData*) ",")) "."))
+            (printline (str-cat "Based on your answers I have eliminated " (nth$ 1 (split$ (nth$ ?i ?*AnimalData*) ",")) "."))
             (bind ?*AnimalData* (delete$ ?*AnimalData* ?i ?i))
             (eval (str-cat "(assert (length" (length$ ?*AnimalData*) "))"))
             (-- ?i)
@@ -135,7 +147,9 @@
 ); (deffunction requestInfo (?question)
 
 /**
-** Concludes the game. 
+** Concludes the game. Simply gets user input if yes or any other string starting with y
+** then I won.
+** If any string starting with n then I lost.
 ** 
 ** @param ?win whether or not the computer has successfully determined the animal.
 */
@@ -165,7 +179,9 @@
 ); (deffunction gameOver (?win)
 
 /**
-** Gets the animal data from a csv file based on the ?fileName
+** Gets the animal data from a csv file based on the ?fileName.
+** This function will also load the animals into the game by adding rules. Which correspond to the 
+** animals listed in the csv. 
 ** 
 ** @param ?fileName the file name to use
 */
@@ -241,23 +257,6 @@
       ")
       )
    )
-   ;(printline (str-cat "Building the rule for a " (nth$ 1 ?data)))
-
-   /*
-   (if (str-eq "Cow" (nth$ 1 ?data)) then
-      (printline "Sample Below: ")
-      (printline (str-cat ?toRule "
-      )
-      )
-      =>
-      (bind ?victory TRUE)
-      (if ?victory then
-         (gameOver (ask \"Is your animal a " (nth$ 1 ?data) "?\"))
-      ))"))
-      (printline "***********")
-   )
-   */
-
    (build 
       (str-cat ?toRule "
       )
@@ -272,7 +271,9 @@
 ) ; (deffunction createAnimal (?data)
 
 /**
-** Builds all the rules needed for asking the questions about the game.
+** Builds all the rules needed for asking the questions about the game. The rules outline that 
+** if the answer is already known do not ask, and also only ask if I need this attribute.
+** 
 ** Sample below:
 (defrule askQuestionNumber21 "The rule that will ask the user to resolve the attribute for question id 21."
    (need-attribute (question "21. Does your animal have a bill or beak?"))
@@ -319,9 +320,9 @@
       )
    )
    (return)
-)
+); (deffunction autoAssert (?questionNumber ?val)
 
-(defrule main "The starting point for the game."
+(defrule main "The starting point for the game. Prints out dialogue to prompt the user and imports the data."
    (declare (salience 2))
 =>
    (getAnimalData "animalListAndAttributes.csv")
@@ -333,7 +334,7 @@
    (printline "Choose an animal and then I'll try to guess which one you are thinking of.")
    (printline "If you are unsure about the answer you can input \"idk.\" Otherwise enter y(es) or n(o).")
    (printline "Hint: if you want to see all the possible animals just answer unknown to everything.")
-)
+); (defrule main "The starting point for the game. Prints out dialogue to prompt the user and imports the data."
 
 (defrule end "The ending point of the game if the user has lost."
    (declare (salience 2))
@@ -359,7 +360,7 @@
 
    ;the following line of code will just randomly choose an animal from the list of animals
    (eval (str-cat "(assert (" (nth$ 1 (split$ (nth$ (+ (mod (random) (length$ ?*AnimalData*)) 1) ?*AnimalData*) ",")) "))"))
-)
+); (defrule end "The ending point of the game if there are multiple possible animal results."
 
 (defrule win "The ending point of the game if there is only 1 remaining possible animal. Thus, the program is certain of the answer."
    (declare (salience 2))
