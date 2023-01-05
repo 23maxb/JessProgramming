@@ -32,7 +32,7 @@
 */
 (defglobal ?*PossibleQuestions* = (create$ 
    "Did the pain start recently?";1
-   "Does it hurt when you breathe?";2
+   "Does it hurt only when you breathe?";2
    "Does the pain get worse when you are excercising?";3
    "Is there a rash on your chest near the pain area?";4
    "Does the pain feel like a something ripping apart?";5
@@ -40,7 +40,7 @@
    "Do you have a fever?";7
    "Have you been recently in a situation where you experienced blunt force trauma?";8
    "Get an x-ray. Does it show a bruised/broken rib?";9
-   "Does it hurt when you eat?";10
+   "Does it hurt only when you eat?";10
    "Do you have yellow skin?";11
    "Do you have leg swelling?"';12
    "Get an x-ray. Do you have tumors?";13
@@ -140,6 +140,7 @@
 ** If any string starting with n then I lost.
 ** 
 ** @param ?win whether or not the computer has successfully determined the chest pain cause.
+** @return true if the user won otherwise false
 */
 (deffunction gameOver (?win)
    (bind ?win (lowcase ?win))
@@ -163,7 +164,7 @@
    )
    
    (halt)
-   (return)
+   (return ?val)
 ); (deffunction gameOver (?win)
 
 /**
@@ -218,8 +219,12 @@
       =>
       (bind ?victory TRUE)
       (if ?victory then
-         (gameOver (ask \"Do you have " (nth$ 1 ?data) "?\"))
-      ))")
+         (bind ?victory (gameOver (ask \"Do you have " (nth$ 1 ?data) "?\")))
+      )
+      (if ?victory then
+         (getInfo \"" (nth$ 1 ?data) "\")
+      )
+      )")
    )
    (return)
 ) ; (deffunction createCause (?data)
@@ -245,6 +250,33 @@
       )
    )
    (return)
+)
+
+/**
+** Gets the relevant information for the diagnosis and prints it.
+** 
+** @param ?problem the diagnosis as a string
+**/
+(deffunction getInfo (?problem)
+   (open "chestPainTreatmentData.csv" r)
+   (bind ?chestPainDataLoading TRUE)
+   (bind ?outputData (create$))
+   (while ?chestPainDataLoading
+      (bind ?inputRead (readline r)) 
+      (if (not (str-eq ?inputRead "EOF")) then
+         (bind ?outputData (insert$ ?outputData (+ 1 (length$ ?outputData)) ?inputRead))
+      else
+         (bind ?chestPainDataLoading FALSE)
+      )
+   ) ; (while ?chestPainDataLoading
+   (bind ?i 1)
+   (while (<= ?i (length$ ?outputData)) 
+      (if (str-eq (nth$ 1 (split$ (nth$ ?i ?outputData) ",")) ?problem) then
+         (printline (nth$ 2 (split$ (nth$ ?i ?outputData) ",")))
+         (bind ?i (+ 1 (length$ ?outputData)))
+      )
+      (++ ?i)
+   )
 )
 
 /*
