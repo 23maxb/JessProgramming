@@ -1,6 +1,7 @@
 /**
 ** Diagnoses the users chest pain.
 ** Possible chestpain causes are listed in chestPainData.csv.
+** Recommendations stated in chestPainTreatmentData.csv
 ** This chest pain diagnostic tool was built around using as many dynamically created rules to streamline this file. 
 ** All the data for the chest pain is stored in a csv file named chestPainData.csv which must be 
 ** located in the same folder as the jess directory. 
@@ -12,23 +13,22 @@
 ** Alternatively, call runfile.bat in any terminal (windows only).
 **
 ** @author Max Blennemann
-** @version 12/12/22
-** @version 0.1
+** @version 1/5/23
+** @version 1.0
 */
 
 (deftemplate attribute (slot question) (slot value))
 (do-backward-chaining attribute)
-;value is integer
-;-1 is not set (not used)
+;value is integer either 0 or 1
 ; 0 is no
 ; 1 is yes
-; 2 is unknown (not used)
 
 /**
 ** This is the possible question bank
 ** DO NOT CHANGE THE ORDER OF THE QUESTIONS.
 ** But if you do change the order, reorder the answers in the csv file accordingly.
 ** If you want to add a question just append it to the end.
+** You will need to answer the question for all possible chest pain causes in the csv.
 */
 (defglobal ?*PossibleQuestions* = (create$ 
    "Did the pain start recently?";1
@@ -194,8 +194,35 @@
 /**
 ** Creates an chest Pain cause rule based on data in the form of a list that is passed as a parameter.
 ** 
-** Example Rule for the data for cow:
-** 
+** Example Rule for the data for stress:
+
+(defrule Stress "The rule that checks to see if the cause of chest pain is Stress" 
+   (declare (salience 1))
+   (or (Stress) (and
+      (attribute (question "Did the pain start recently?") (value 0))
+      (attribute (question "Does it hurt only when you breathe?") (value 0))
+      (attribute (question "Does the pain get worse when you are excercising?") (value 0))
+      (attribute (question "Is there a rash on your chest near the pain area?") (value 1))
+      (attribute (question "Does the pain feel like a something ripping apart?") (value 0))
+      (attribute (question "Are you under extreme stress?") (value 0))
+      (attribute (question "Do you have a fever?") (value 0))
+      (attribute (question "Have you been recently in a situation where you experienced blunt force trauma?") (value 0))
+      (attribute (question "Get an x-ray. Does it show a bruised/broken rib?") (value 0))
+      (attribute (question "Does it hurt only when you eat?") (value 0))
+      (attribute (question "Do you have yellow skin?") (value 0))
+      (attribute (question "Do you have leg swelling?") (value 0))
+      (attribute (question "'") (value 0))
+   ))
+=>
+   (bind ?victory TRUE)
+   (if ?victory then
+      (bind ?victory (gameOver (ask "Do you have Stress?")))
+   )
+   (if ?victory then
+      (getInfo "Stress")
+   )
+)
+
 ** 
 ** @param ?data a list with the data 
 */
@@ -226,19 +253,26 @@
       )
       )")
    )
+
    (return)
 ) ; (deffunction createCause (?data)
 
 /**
 ** Builds all the rules needed for asking the questions about the game. The rules outline that 
 ** if the answer is already known do not ask, and also only ask if I need this attribute.
-** 
-** NEED TO REGEN SAMPLE RULE
+** Sample Below:
+
+(defrule askQuestionNumber1 "The rule that will ask the user to resolve the attribute for question id 1."
+   ;(need-attribute (question "Did the pain start recently?"))
+   (not (attribute (question "Did the pain start recently?")))
+=>
+   (autoAssert 1(requestInfo 1))
+)
+
 ** 
 ** @param ?questionNumber the question number to ask
 **/
 (deffunction createQuestionRule (?questionNumber)
-   ;(printline (str-cat "Building rule for the question " (nth$ (- ?questionNumber) ?*PossibleQuestions*) "."))
    (build 
       (str-cat "(defrule askQuestionNumber" ?questionNumber 
                " \"The rule that will ask the user to resolve the attribute for question id " ?questionNumber ".\"
@@ -250,7 +284,7 @@
       )
    )
    (return)
-)
+);(deffunction createQuestionRule (?questionNumber)
 
 /**
 ** Gets the relevant information for the diagnosis and prints it.
@@ -277,7 +311,8 @@
       )
       (++ ?i)
    )
-)
+   (return)
+);(deffunction getInfo (?problem)
 
 /*
 ** Automatically creates logical conclusions based on the fact space.
